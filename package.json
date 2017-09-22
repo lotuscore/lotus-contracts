@@ -1,0 +1,9 @@
+{
+  "name": "lotus-contracts",
+  "version": "0.0.1",
+  "description": "Lotus Core contracts",
+  "license": "MIT",
+  "dependencies": {
+    "zeppelin-solidity": "^1.2.0"
+  }
+}
