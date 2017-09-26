@@ -4,6 +4,7 @@
   "description": "Lotus Core contracts",
   "license": "MIT",
   "dependencies": {
+    "truffle-hdwallet-provider": "^0.0.3",
     "zeppelin-solidity": "^1.2.0"
   }
 }
