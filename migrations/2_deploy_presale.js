@@ -1,5 +1,5 @@
 /* globals  artifacts */
-const LotusPreSale = artifacts.require('./LotusPreSale.sol')
+const LotusPresale = artifacts.require('./LotusPresale.sol')
 
 const RATE = 12000 // 12000 tokens per ether
 const CAP = 8334 * (10 ** 18)
@@ -10,5 +10,5 @@ const END_TIME = Math.round(
 const WALLET = process.env.PS_WALLET
 
 module.exports = function(deployer) {
-  deployer.deploy(LotusPreSale, START_TIME, END_TIME, RATE, CAP, WALLET)
+  deployer.deploy(LotusPresale, START_TIME, END_TIME, RATE, CAP, WALLET)
 };
