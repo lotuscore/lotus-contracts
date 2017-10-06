@@ -19,6 +19,7 @@ contract LotusPresale is CappedCrowdsale {
    */
   function transferTokenOwnership() public {
     require(hasEnded());
+    require(token.owner != wallet);
     token.transferOwnership(wallet);
   }
 

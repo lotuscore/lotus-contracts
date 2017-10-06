@@ -17,7 +17,7 @@ contract LotusToken is MintableToken, LimitedTransferToken {
     balances[tx.origin] = INITIAL_SUPPLY;
   }
 
-  function makeTransferable(bool _transferable) onlyOwner public returns (bool) {
+  function makeTransferable() onlyOwner public returns (bool) {
     require(transferable == false);
     transferable = true;
     TransferableChanged(transferable);
