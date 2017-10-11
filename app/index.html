@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Contacts Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Lato|Ubuntu+Mono" rel="stylesheet">
+    <script src="./app.js"></script>
+</head>
+<body>
+    <div id="App">
+        <div class="container">
+            <header>
+                <h1>Dashboard</h1>
+            </header>
+            <h2>Accounts</h2>
+            <div class="row">
+                <div class="col col-md-8">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Address</th>
+                                <th>Balance</th>
+                                <th>LTS</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr rv-each-account="accounts" rv-class-selected="account.isSelected">
+                                <td class="code">{ account.address }</td>
+                                <td>{ account.balance | weiToETH }</td>
+                                <td>{ account.tokenBalance | weiToLTS }</td>
+                                <td>
+                            <button class="btn" rv-on-click="selectAddress">Select</button>
+                            <button class="btn" rv-on-click="lockAccount">Lock</button>
+                            <button class="btn" rv-on-click="unlockAccount">Unlock</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <h2>Contracts</h2>
+            <div class="contract" rv-each-contract="contracts">
+                <h3>{ contract.name }</h3>
+                <small>{ contract.instance.address }</small>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Signature</th>
+                            <th>Value</th>
+                            <th>Human Readable</th>
+                            <th>Arguments</th>
+                            <th></th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr rv-each-el="contract.abi" rv-class-event="el.isEvent">
+                            <td class="code">
+                                <span>{ el.type }</span>
+                                <span rv-if="el.payable">payable</span>
+                                <span rv-if="el.constant">constant</span>
+                                <span class="bold">{ el.name }</span>
+                            </td>
+                            <td>
+                                { el.result }
+                            </td>
+                            <td>
+                                { el.result | forHumans }
+                            </td>
+                            <td>
+                                <ul rv-unless="el.inputs | empty">
+                                    <li class="args" rv-each-in="el.inputs">
+                                        { in.name }
+                                    </li>
+                                    <li rv-if="el.payable" class="args bold">value</li>
+                                </ul>
+                            </td>
+                            <td rv-if="el | isFunction">
+                                <ul rv-unless="el.inputs | empty">
+                                    <li rv-each-in="el.inputs">
+                                        <input type="text"  rv-value="in.value">
+                                    </li>
+                                    <li rv-if="el.payable">
+                                        <input type="text"  rv-value="el.value">
+                                    </li>
+                                </ul>
+                            </td><td rv-unless="el | isFunction"></td>
+                            <td>
+                                <button rv-if="el | isConstantFunction" class="btn" rv-on-click="call">Call</button>
+                                <button rv-if="el | isTransactionFunction" class="btn btn-primary" rv-on-click="sendTransaction">Transaction</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
