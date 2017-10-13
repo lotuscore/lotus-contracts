@@ -7,9 +7,11 @@ import { default as contract } from 'truffle-contract'
 
 import lotus_presale_artifacts from '../../build/contracts/LotusPresale.json'
 import lotus_token_artifacts from '../../build/contracts/LotusToken.json'
+import reserve_vault_artifacts from '../../build/contracts/ReserveVault.json'
 
 const LotusPresale = contract(lotus_presale_artifacts);
 const LotusToken = contract(lotus_token_artifacts);
+const ReserveVault = contract(reserve_vault_artifacts);
 
 const App = {
     state: {},
@@ -23,6 +25,7 @@ const App = {
         }
         LotusPresale.setProvider(this.web3.currentProvider)
         LotusToken.setProvider(this.web3.currentProvider)
+        ReserveVault.setProvider(this.web3.currentProvider)
         rivets.bind(document.getElementById('App'), this.state)
 
         this.bindActions()
@@ -42,6 +45,9 @@ const App = {
             this.lotusPresaleInstance = instance
             return instance.token.call().then((token) => {
                 this.lotusTokenInstance = LotusToken.at(token)
+                return this.lotusTokenInstance.teamVault.call().then((vault) => {
+                    this.teamVaultInstance = ReserveVault.at(vault)
+                });
             })
         }).catch((e) => {
             console.log(e);
@@ -62,6 +68,12 @@ const App = {
                 instance: this.lotusTokenInstance,
                 artifacts: lotus_token_artifacts,
                 abi: lotus_token_artifacts.abi
+            },
+            {
+                name: 'ReserveVault.json (team)',
+                instance: this.teamVaultInstance,
+                artifacts: reserve_vault_artifacts,
+                abi: reserve_vault_artifacts.abi
             }]
         this.web3.eth.accounts.forEach((address, index) => {
             this.lotusTokenInstance.balanceOf(address, {from: address}).then((tokenBalance) => {
