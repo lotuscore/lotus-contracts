@@ -1,4 +1,8 @@
-var HDWalletProvider = require("truffle-hdwallet-provider");
+require('babel-register')({
+    ignore: /node_modules\/(?!zeppelin-solidity)/
+});
+require('babel-polyfill')
+const HDWalletProvider = require("truffle-hdwallet-provider");
 
 module.exports = {
   networks: {

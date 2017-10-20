@@ -7,6 +7,8 @@ contract LotusToken is MintableToken {
   string public name = 'Lotus Token';
   string public symbol = 'LTS';
   uint public decimals = 18;
+  // (GTM) February 1, 2018 12:00:00 AM
+  uint public releaseDate = 1517443200;
 
   uint communityTokens = 100000000 * (10 ** decimals);
   uint partnershipTokens = 100000000 * (10 ** decimals);
@@ -17,12 +19,27 @@ contract LotusToken is MintableToken {
 
   // use community-partnership-team order as the pattern for the arrays below
   uint[3] public released = [0, 0, 0];
-  uint[3] public reserve = [communityTokens, partnershipTokens, teamTokens];
-  uint64[3] releaseDates = [1485820800, 1485820800, 1485820800];
+  uint[3] public reserves = [communityTokens, partnershipTokens, teamTokens];
+  uint64[3] public releaseDates = [1517443200, 1517443200, 1517443200];
 
   function LotusToken() {
     totalSupply = communityTokens + partnershipTokens + teamTokens;
     balances[this] = totalSupply;
+  }
+
+  function transfer(address _to, uint256 _value) public returns (bool) {
+    require(now > releaseDate);
+    return super.transfer(_to, _value);
+  }
+
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    require(now > releaseDate);
+    return super.transferFrom(_from, _to, _value);
+  }
+
+  function finishMinting() onlyOwner public returns (bool) {
+    require(now > releaseDate);
+    return super.finishMinting();
   }
 
   /**
@@ -37,7 +54,7 @@ contract LotusToken is MintableToken {
 
     // update reserves released
     uint total_released = released[_type].add(_value);
-    require(total_released <= reserve[_type]);
+    require(total_released <= reserves[_type]);
     released[_type] = total_released;
 
     Vault vault = new Vault(this, _beneficiary, releaseDates[_type]);

@@ -15,11 +15,12 @@ contract LotusPresale is CappedCrowdsale {
   }
 
   /**
-   * @dev In order to allow minting in the public crowdsale, transfer control
-   * of the token contract to the funding wallet
+   * @dev In order to allow minting in the public crowdsale and manage reserves
+   * transfer control of the token contract to the main lotus wallet
    */
   function transferTokenOwnership() public {
-    require(hasEnded());
+    require(msg.sender == wallet);
+    require(now < startTime || now > endTime);
     token.transferOwnership(wallet);
   }
 
