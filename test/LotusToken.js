@@ -25,6 +25,10 @@ contract('LotusToken', (accounts) => {
     const reserves = new BigNumber(400000000 * (10 ** (await this.token.decimals.call())));
     (await this.token.balanceOf.call(this.token.address)).should.be.bignumber.equal(reserves);
   });
+  it('should totalSupply be equal to contract balance at the beginning', async function () {
+    (await this.token.balanceOf.call(this.token.address)).should.be.bignumber.equal(
+      await this.token.totalSupply.call());
+  });
   it('should exist only three reserve vaults', async function () {
     for (var index = 0; index < 4; index++) {
       if (index < 3) await this.token.reserves.call(index).should.be.fulfilled;
