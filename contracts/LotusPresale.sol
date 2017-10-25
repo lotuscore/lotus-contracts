@@ -11,7 +11,8 @@ contract LotusPresale is CappedCrowdsale {
   }
 
   function createTokenContract() internal returns (MintableToken) {
-    return new LotusToken();
+    uint64 releaseDate = 1517443200; // (GTM) February 1, 2018 12:00:00 AM
+    return new LotusToken(msg.sender, releaseDate);
   }
 
   /**
