@@ -28,6 +28,10 @@ contract LotusReserve is Ownable {
     token = _token;
   }
 
+  function getGrant(address _beneficiary, uint8 _index) public returns (address) {
+    return grants[_beneficiary][_index];
+  }
+
   /**
    * @dev Create a vault time locked to be released according to releaseDates array
    *
@@ -37,6 +41,7 @@ contract LotusReserve is Ownable {
    */
   function grantTokens(address _beneficiary, uint8 _type, uint _value) onlyOwner public {
     require(_type <= 2);
+    require(token.balanceOf(this) > _value);
 
     // Check is not needed because sub(_value) will already throw if this condition is not met
     // require (_value > released[_type]);
@@ -50,8 +55,7 @@ contract LotusReserve is Ownable {
   }
 
   function revokeTokenGrant(address _holder, uint256 _grantId) onlyOwner public {
-    Vault vault = Vault(grants[_holder][_grantId]);
-
+    Vault vault = grants[_holder][_grantId];
     uint64 releaseTime = vault.releaseTime();
     uint8 _type = releaseTime == releaseDates[0] ? 0 : releaseTime == releaseDates[1] ? 1 : 2;
 

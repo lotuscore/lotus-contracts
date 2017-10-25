@@ -1,3 +1,4 @@
+/* globals web3, require, artifacts, contract, it, before, beforeEach, describe */
 import { increaseTimeTo, duration } from 'zeppelin-solidity/test/helpers/increaseTime';
 import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import { advanceBlock } from 'zeppelin-solidity/test/helpers/advanceToBlock';
@@ -8,7 +9,7 @@ import {
 
 const BigNumber = web3.BigNumber;
 const lotusAddress = '0x93e66d9baea28c17d9fc393b53e3fbdd76899dae';
-const should = require('chai')
+require('chai')
   .use(require('chai-as-promised'))
   .use(require('chai-bignumber')(BigNumber))
   .should();
@@ -31,7 +32,7 @@ contract('LotusToken', (accounts) => {
 
   it('should reserves be equal to totalSupply equal to 400000000*10^18 LTS', async function () {
     const reserveContract = await this.token.reserve.call();
-    const reserveAmount = await this.token.balanceOf.call(reserveContract)
+    const reserveAmount = await this.token.balanceOf.call(reserveContract);
     const reserveExpected = INITIAL_SUPPLY;
 
     reserveAmount.should.be.bignumber.equal(await this.token.totalSupply.call());
@@ -61,10 +62,10 @@ contract('LotusToken', (accounts) => {
 
   describe('after releaseDate', () => {
     beforeEach(async function() {
-      await increaseTimeTo(this.afterRelease)
+      await increaseTimeTo(this.afterRelease);
     });
 
-    it('should will be able to transfer', async function () {
+    it('should be able to transfer', async function () {
       const account = accounts[1];
       await this.token.mint(account, 10);
 
@@ -79,8 +80,12 @@ contract('LotusToken', (accounts) => {
       (await this.token.balanceOf(account)).should.be.bignumber.equal(0);
     });
 
-    it('should will be able to finishMinting', async function () {
+    it('should be able to finishMinting', async function () {
       await this.token.finishMinting().should.be.fulfilled;
+    });
+
+    it('should prevent non-owners from finishMinting', async function () {
+      await this.token.finishMinting({from: accounts[2]}).should.be.rejectedWith(EVMThrow);
     });
   });
 });
