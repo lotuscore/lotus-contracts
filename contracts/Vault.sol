@@ -7,7 +7,6 @@ import 'zeppelin-solidity/contracts/token/TokenTimelock.sol';
 
 contract Vault is TokenTimelock, Ownable {
 
-  ERC20Basic public token;
   bool public revocable = true;
 
   function Vault(ERC20Basic _token, address _beneficiary, uint64 _releaseTime)
@@ -25,7 +24,7 @@ contract Vault is TokenTimelock, Ownable {
   function revoke() public onlyOwner {
     require(revocable);
 
-    uint256 balance = token.balanceOf(this);
+    uint balance = token.balanceOf(this);
 
     token.safeTransfer(owner, balance);
     revocable = false;
