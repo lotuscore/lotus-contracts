@@ -20,7 +20,7 @@ contract('LotusReserve', (accounts) => {
 
   beforeEach(async function () {
     const releaseDate = latestTime() + duration.days(1);
-    this.afterRelease = releaseDate + duration.days(2);
+    this.afterRelease = releaseDate + duration.seconds(1);
     this.lotusAddress = accounts[1];
     this.token = await LotusToken.new(this.lotusAddress, releaseDate);
     this.reserveContract = new LotusReserve(await this.token.reserve.call());

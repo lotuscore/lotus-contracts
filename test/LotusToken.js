@@ -26,7 +26,7 @@ contract('LotusToken', (accounts) => {
 
   beforeEach(async function () {
     const releaseDate = latestTime() + duration.days(1);
-    this.afterRelease = releaseDate + duration.days(2);
+    this.afterRelease = releaseDate + duration.days(1);
     this.token = await LotusToken.new(lotusAddress, releaseDate);
   });
 
