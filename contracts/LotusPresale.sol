@@ -2,27 +2,34 @@ pragma solidity ^0.4.11;
 
 import 'zeppelin-solidity/contracts/crowdsale/CappedCrowdsale.sol';
 import './LotusToken.sol';
+import './LotusReserve.sol';
 
 
 contract LotusPresale is CappedCrowdsale {
-  function LotusPresale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, address _wallet)
+
+  bool initialized = false;
+
+  function LotusPresale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, address fundAccount)
     CappedCrowdsale(_cap)
-    Crowdsale(_startTime, _endTime, _rate, _wallet) {
+    Crowdsale(_startTime, _endTime, _rate, fundAccount) {
   }
 
-  function createTokenContract() internal returns (MintableToken) {
-    uint64 releaseDate = 1517443200; // (GTM) February 1, 2018 12:00:00 AM
-    return new LotusToken(msg.sender, releaseDate);
+  function use(address tokenAddress) public {
+    require(initialized == false);
+    require(LotusToken(tokenAddress).releaseDate() > endTime);
+
+    token = LotusToken(tokenAddress);
+    initialized = true;
   }
 
   /**
-   * @dev In order to allow minting in the public crowdsale and manage reserves
-   * transfer control of the token contract to the main lotus wallet
+   * @dev In order to allow minting in the public crowdsale transfer the
+   * ownership of the token contract
    */
-  function transferTokenOwnership() public {
-    require(msg.sender == wallet);
-    require(now < startTime || now > endTime);
-    token.transferOwnership(wallet);
+  function transferTokenOwnership(address crowdsaleAddress) public {
+    require(now > endTime);
+    require(msg.sender == LotusToken(token).reserve().owner());
+    token.transferOwnership(crowdsaleAddress);
   }
 
 }

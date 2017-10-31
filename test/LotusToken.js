@@ -8,7 +8,6 @@ import {
 } from './helpers/globals';
 
 const BigNumber = web3.BigNumber;
-const lotusAddress = '0x93e66d9baea28c17d9fc393b53e3fbdd76899dae';
 require('chai')
   .use(require('chai-as-promised'))
   .use(require('chai-bignumber')(BigNumber))
@@ -26,8 +25,9 @@ contract('LotusToken', (accounts) => {
 
   beforeEach(async function () {
     const releaseDate = latestTime() + duration.days(1);
+    const reserveAccount = accounts[3];
     this.afterRelease = releaseDate + duration.days(1);
-    this.token = await LotusToken.new(lotusAddress, releaseDate);
+    this.token = await LotusToken.new(reserveAccount, releaseDate);
   });
 
   it('should reserves be equal to totalSupply equal to 400000000*10^18 LTS', async function () {

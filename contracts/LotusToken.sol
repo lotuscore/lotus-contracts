@@ -10,7 +10,7 @@ contract LotusToken is MintableToken {
   uint public releaseDate;
   LotusReserve public reserve;
 
-  function LotusToken(address mainAddress, uint64 _releaseDate) {
+  function LotusToken(address reserveAccount, uint64 _releaseDate) {
     // `reserveSupply` hardcoded to match with `reserves` in LotusReserve.sol contract
     uint reserveSupply = 400000000 * (10 ** decimals);
 
@@ -19,7 +19,7 @@ contract LotusToken is MintableToken {
     totalSupply = reserveSupply;
     balances[reserve] = reserveSupply;
 
-    reserve.transferOwnership(mainAddress);
+    reserve.transferOwnership(reserveAccount);
   }
 
   function transfer(address _to, uint256 _value) public returns (bool) {

@@ -2,6 +2,7 @@
 import { increaseTimeTo, duration } from 'zeppelin-solidity/test/helpers/increaseTime';
 import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
+import { advanceBlock } from 'zeppelin-solidity/test/helpers/advanceToBlock';
 
 const BigNumber = web3.BigNumber;
 require('chai')
@@ -44,12 +45,21 @@ contract('LotusVault', (accounts) => {
     await this.vault.revoke({ from: this.lotusAddress }).should.be.rejectedWith(EVMThrow);
   });
   it('should revoke modify the current balance to zero', async function () {
-    // if I do not check the balance before increaseTimeTo, then the followin assertion fails (I dont know why)
     (await this.token.balanceOf(this.vault.address)).should.be.bignumber.equal(100);
+
     await increaseTimeTo(this.afterRelease);
-    (await this.token.balanceOf(this.vault.address)).should.be.bignumber.equal(100);
+
     await this.vault.revoke({ from: this.lotusAddress }).should.be.fulfilled;
     (await this.token.balanceOf(this.vault.address)).should.be.bignumber.equal(0);
+  });
+  it('should increase owner balance to owner balance plus value', async function () {
+    (await this.token.balanceOf(this.vault.address)).should.be.bignumber.equal(100);
+    (await this.token.balanceOf(this.lotusAddress)).should.be.bignumber.equal(0);
+
+    await increaseTimeTo(this.afterRelease);
+
+    await this.vault.revoke({ from: this.lotusAddress }).should.be.fulfilled;
+    (await this.token.balanceOf(this.lotusAddress)).should.be.bignumber.equal(100);
   });
   it('should revoke change the revocable state to false', async function () {
     (await this.vault.revocable.call()).should.be.true;

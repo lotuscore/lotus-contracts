@@ -145,11 +145,8 @@ contract('LotusReserve', (accounts) => {
     });
   });
   describe('revokeTokenGrant (after release)', () => {
-    beforeEach(async function() {
-      await increaseTimeTo(this.afterRelease);
-    });
-
     beforeEach(async function () {
+      await increaseTimeTo(this.afterRelease);
       this.beneficiary = accounts[2];
       await this.reserveContract.grantTokens(this.beneficiary, 0, 111, {
         from: this.lotusAddress
