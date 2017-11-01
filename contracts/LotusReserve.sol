@@ -13,7 +13,6 @@ contract LotusReserve is Ownable {
   event tokensGranted(address _beneficiary, uint8 _type, uint _value);
 
   // use community-partnership-team order as the pattern for the arrays below
-  // uint[3] public released = [0, 0, 0];
   uint[3] public reserves = [
     100000000 * (10 ** 18),
     100000000 * (10 ** 18),
@@ -44,7 +43,7 @@ contract LotusReserve is Ownable {
     require(token.balanceOf(this) > _value);
 
     // Check is not needed because sub(_value) will already throw if this condition is not met
-    // require (_value > released[_type]);
+    // require (reserves[_type] > _value);
     reserves[_type] = reserves[_type].sub(_value);
 
     Vault vault = new Vault(token, _beneficiary, releaseDates[_type]);
