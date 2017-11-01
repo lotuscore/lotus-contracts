@@ -1,9 +1,9 @@
 pragma solidity ^0.4.11;
 
 import 'zeppelin-solidity/contracts/crowdsale/CappedCrowdsale.sol';
+import 'zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
 import './LotusToken.sol';
 import './LotusReserve.sol';
-
 
 contract LotusPresale is CappedCrowdsale {
 
@@ -28,6 +28,7 @@ contract LotusPresale is CappedCrowdsale {
    */
   function transferTokenOwnership(address crowdsaleAddress) public {
     require(now > endTime);
+    require(Crowdsale(crowdsaleAddress).hasEnded() == false);
     require(msg.sender == LotusToken(token).reserve().owner());
     token.transferOwnership(crowdsaleAddress);
   }
