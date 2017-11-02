@@ -40,7 +40,7 @@ contract LotusReserve is Ownable {
    */
   function grantTokens(address _beneficiary, uint8 _type, uint _value) onlyOwner public {
     require(_type <= 2);
-    require(token.balanceOf(this) > _value);
+    require(token.balanceOf(this) >= _value);
 
     // Check is not needed because sub(_value) will already throw if this condition is not met
     // require (reserves[_type] > _value);

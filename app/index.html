@@ -4,6 +4,7 @@
     <title>Contacts Dashboard</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Lato|Ubuntu+Mono" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.0/mark.min.js"></script>
     <script src="./app.js"></script>
 </head>
 <body>
@@ -41,7 +42,7 @@
             </div>
             <h2>Contracts</h2>
             <div class="contract" rv-each-contract="contracts">
-                <h3>{ contract.name }</h3>
+                <h3>{ contract.name } - { contract.balance } LTS</h3>
                 <small>{ contract.instance.address }</small>
                 <table class="table">
                     <thead>
@@ -55,7 +56,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr rv-each-el="contract.abi" rv-class-event="el.isEvent">
+                        <tr rv-each-el="contract.artifacts.abi" rv-class-event="el.isEvent">
                             <td class="code">
                                 <span>{ el.type }</span>
                                 <span rv-if="el.payable">payable</span>

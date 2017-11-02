@@ -21,8 +21,8 @@ contract('LotusReserve', (accounts) => {
   beforeEach(async function () {
     const releaseDate = latestTime() + duration.days(1);
     this.afterRelease = releaseDate + duration.seconds(1);
-    this.lotusAddress = accounts[1];
-    this.token = await LotusToken.new(this.lotusAddress, releaseDate);
+    this.reserveAccount = accounts[1];
+    this.token = await LotusToken.new(this.reserveAccount, releaseDate);
     this.reserveContract = new LotusReserve(await this.token.reserve.call());
   });
   it('should reserves balance be equal to 400000000*10^18 LTS', async function () {
@@ -30,8 +30,8 @@ contract('LotusReserve', (accounts) => {
     const reserveExpected = INITIAL_SUPPLY;
     reserveAmount.should.be.bignumber.equal(reserveExpected);
   });
-  it('should lotusAddress be the reserve owner', async function() {
-    (await this.reserveContract.owner.call()).should.be.equal(this.lotusAddress);
+  it('should reserveAccount be the reserve owner', async function() {
+    (await this.reserveContract.owner.call()).should.be.equal(this.reserveAccount);
   });
   it('should `reserves` length be equal 3', async function () {
     for (var index = 0; index < 4; index++) {
@@ -72,13 +72,13 @@ contract('LotusReserve', (accounts) => {
     });
     it('should create a Vault and add it to `grants` list', async function () {
       await this.reserveContract.grantTokens(this.beneficiary, 0, 100, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.fulfilled;
       await this.reserveContract.getGrant(this.beneficiary, 0).should.be.fulfilled;
     });
     it('should the created Vault have the correct balance', async function () {
       await this.reserveContract.grantTokens(this.beneficiary, 0, 100, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.fulfilled;
       const vault = await this.reserveContract.getGrant.call(this.beneficiary, 0);
       (await this.token.balanceOf.call(vault)).should.be.bignumber.equal(100);
@@ -92,7 +92,7 @@ contract('LotusReserve', (accounts) => {
       let vault;
       for (var index=0; index < releaseDates.length; index++) {
         await this.reserveContract.grantTokens(this.beneficiary, index, 100, {
-          from: this.lotusAddress
+          from: this.reserveAccount
         }).should.be.fulfilled;
         vault = Vault.at(await this.reserveContract.getGrant.call(this.beneficiary, index));
         (await vault.releaseTime.call()).should.be.bignumber.equal(releaseDates[index]);
@@ -102,15 +102,15 @@ contract('LotusReserve', (accounts) => {
       const incorrectType1 = 3;
       const incorrectType2 = -1;
       await this.reserveContract.grantTokens(this.beneficiary, incorrectType1, 100, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.rejectedWith(EVMThrow);
       await this.reserveContract.grantTokens(this.beneficiary, incorrectType2, 100, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.rejectedWith(EVMThrow);
     });
     it('should prevent non-owners from execution', async function () {
       const nonOwner = accounts[0];
-      nonOwner.should.be.not.equal(this.lotusAddress);
+      nonOwner.should.be.not.equal(this.reserveAccount);
       await this.reserveContract.grantTokens(this.beneficiary, 0, 100, {
         from: nonOwner
       }).should.be.rejectedWith(EVMThrow);
@@ -119,7 +119,7 @@ contract('LotusReserve', (accounts) => {
       const type = 0;
       const reserve = await this.reserveContract.reserves.call(type);
       await this.reserveContract.grantTokens(this.beneficiary, type, reserve.plus(1), {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.rejectedWith(EVMThrow);
     });
     it('should subtract the correct value from the target reserve', async function () {
@@ -131,7 +131,7 @@ contract('LotusReserve', (accounts) => {
       const transferAmount = 1000;
       for (var index=0; index < initialReserves.length; index++) {
         await this.reserveContract.grantTokens(this.beneficiary, index, transferAmount, {
-          from: this.lotusAddress
+          from: this.reserveAccount
         }).should.be.fulfilled;
       }
       const finalReserves = [
@@ -149,16 +149,16 @@ contract('LotusReserve', (accounts) => {
       await increaseTimeTo(this.afterRelease);
       this.beneficiary = accounts[2];
       await this.reserveContract.grantTokens(this.beneficiary, 0, 111, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.fulfilled;
     });
     describe('should remove the correct Vault from the `grants` list', () => {
       beforeEach(async function () {
         await this.reserveContract.grantTokens(this.beneficiary, 0, 222, {
-          from: this.lotusAddress
+          from: this.reserveAccount
         }).should.be.fulfilled;
         await this.reserveContract.grantTokens(this.beneficiary, 0, 333, {
-          from: this.lotusAddress
+          from: this.reserveAccount
         }).should.be.fulfilled;
       });
       for (let i=1; i<=3; i++) {
@@ -174,7 +174,7 @@ contract('LotusReserve', (accounts) => {
 
           // remove grant
           await this.reserveContract.revokeTokenGrant(this.beneficiary, index, {
-            from: this.lotusAddress
+            from: this.reserveAccount
           }).should.be.fulfilled;
 
           // actual test
@@ -198,7 +198,7 @@ contract('LotusReserve', (accounts) => {
       const vaultAddress = await this.reserveContract.getGrant.call(this.beneficiary, 0);
       (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(111);
       await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.fulfilled;
       (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(0);
     });
@@ -207,7 +207,7 @@ contract('LotusReserve', (accounts) => {
       await vault.claim({ from: this.beneficiary }).should.be.fulfilled;
 
       await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.rejectedWith(EVMThrow);
     });
     it('should fails when _holder is not in `grants` list', async function () {
@@ -215,19 +215,19 @@ contract('LotusReserve', (accounts) => {
       nonHolder.should.be.not.equal(this.beneficiary);
       // due grants.length is 1, nonHolder is not in grants list
       await this.reserveContract.revokeTokenGrant(nonHolder, 0, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.rejectedWith(EVMThrow);
     });
     it('should fails with a valid _holder but invalid _grantId in `grants` list', async function () {
       const index = 1;
       // due grants[this.beneficiary].length is 1, index = 1 an invalid _grantId
       await this.reserveContract.revokeTokenGrant(this.beneficiary, index, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.rejectedWith(EVMThrow);
     });
     it('should prevent non-owners from execution', async function () {
       const nonOwner = accounts[0];
-      nonOwner.should.be.not.equal(this.lotusAddress);
+      nonOwner.should.be.not.equal(this.reserveAccount);
       await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
         from: nonOwner
       }).should.be.rejectedWith(EVMThrow);
@@ -235,10 +235,10 @@ contract('LotusReserve', (accounts) => {
     it('should add the correct value to the target reserve', async function () {
       const vaultValue = 111;
       await this.reserveContract.grantTokens(this.beneficiary, 1, vaultValue, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.fulfilled;
       await this.reserveContract.grantTokens(this.beneficiary, 2, vaultValue, {
-        from: this.lotusAddress
+        from: this.reserveAccount
       }).should.be.fulfilled;
 
       const initialReserves = [
@@ -249,7 +249,7 @@ contract('LotusReserve', (accounts) => {
 
       for (var index=0; index < 3; index++) {
         await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
-          from: this.lotusAddress
+          from: this.reserveAccount
         }).should.be.fulfilled;
       }
 

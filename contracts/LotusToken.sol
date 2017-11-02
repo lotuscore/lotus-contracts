@@ -23,7 +23,7 @@ contract LotusToken is MintableToken {
   }
 
   function transfer(address _to, uint256 _value) public returns (bool) {
-    require(msg.sender == address(reserve) || now > releaseDate);
+    require(now > releaseDate || msg.sender == address(reserve));
     return super.transfer(_to, _value);
   }
 
