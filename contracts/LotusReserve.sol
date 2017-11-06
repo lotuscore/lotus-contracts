@@ -27,7 +27,7 @@ contract LotusReserve is Ownable {
     token = _token;
   }
 
-  function getGrant(address _beneficiary, uint8 _index) public returns (address) {
+  function getGrant(address _beneficiary, uint8 _index) public constant returns (address) {
     return grants[_beneficiary][_index];
   }
 
@@ -69,6 +69,12 @@ contract LotusReserve is Ownable {
     grants[_holder][_grantId] = grants[_holder][grants[_holder].length.sub(1)];
     grants[_holder].length -= 1;
 
+    // add vault to this contract list
+    grants[this].push(vault);
+  }
+
+  function releaseRevokedBalance(uint _index) onlyOwner public {
+    grants[this][_index].release();
   }
 
 }

@@ -10,7 +10,9 @@ contract Vault is TokenTimelock, Ownable {
   bool public revocable = true;
 
   function Vault(ERC20Basic _token, address _beneficiary, uint64 _releaseTime)
-    TokenTimelock(_token, _beneficiary, _releaseTime) {}
+    TokenTimelock(_token, _beneficiary, _releaseTime) {
+      require(_beneficiary != owner);
+    }
 
   event Revoked();
   event Claimed();
@@ -23,12 +25,13 @@ contract Vault is TokenTimelock, Ownable {
 
   function revoke() public onlyOwner {
     require(revocable);
-
-    uint balance = token.balanceOf(this);
-
-    token.safeTransfer(owner, balance);
+    beneficiary = owner;
     revocable = false;
     Revoked();
+  }
+
+  function revoked() public constant returns (bool) {
+    return beneficiary == owner;
   }
 
 }

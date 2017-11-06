@@ -144,9 +144,8 @@ contract('LotusReserve', (accounts) => {
       });
     });
   });
-  describe('revokeTokenGrant (after release)', () => {
+  describe('revokeTokenGrant', () => {
     beforeEach(async function () {
-      await increaseTimeTo(this.afterRelease);
       this.beneficiary = accounts[2];
       await this.reserveContract.grantTokens(this.beneficiary, 0, 111, {
         from: this.reserveAccount
@@ -169,6 +168,7 @@ contract('LotusReserve', (accounts) => {
 
           // checking preconditions
           (await vault.revocable.call()).should.be.true;
+          (await vault.revoked.call()).should.be.false;
           (await this.token.balanceOf(vault.address)).should.be.bignumber.equal(value);
           await this.reserveContract.getGrant.call(this.beneficiary, 2).should.be.fulfilled;
 
@@ -189,18 +189,23 @@ contract('LotusReserve', (accounts) => {
 
           // checking postconditions
           (await vault.revocable.call()).should.be.false;
-          (await this.token.balanceOf(vault.address)).should.be.bignumber.equal(0);
+          (await vault.revoked.call()).should.be.true;
 
         });
       }
     });
-    it('should Vault balance be equal to 0 after revoke', async function () {
-      const vaultAddress = await this.reserveContract.getGrant.call(this.beneficiary, 0);
-      (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(111);
+    it('should Vault beneficiary be reserve contract owner', async function () {
+      await this.reserveContract.getGrant.call(this.beneficiary, 0).should.be.fulfilled;
+      await this.reserveContract.getGrant.call(this.reserveContract.address, 0).should.be.rejectedWith(EVMThrow);
+      // const vaultAddress = await this.reserveContract.getGrant.call(this.beneficiary, 0);
+      // (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(111);
       await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
         from: this.reserveAccount
       }).should.be.fulfilled;
-      (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(0);
+      // (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(0);
+      await this.reserveContract.getGrant.call(this.beneficiary, 0).should.be.rejectedWith(EVMThrow);
+      await this.reserveContract.getGrant.call(this.reserveContract.address, 0).should.be.fulfilled;
+
     });
     it('should fails when the Vault was caimed', async function () {
       const vault = Vault.at(await this.reserveContract.getGrant.call(this.beneficiary, 0));
@@ -262,5 +267,30 @@ contract('LotusReserve', (accounts) => {
         finalReserve.should.be.bignumber.equal(initialReserves[index].plus(vaultValue));
       });
     });
+  });
+  it('should releaseRevokedBalance increase contract balance to Vault balance', async function () {
+    this.beneficiary = accounts[2];
+    const vaultValue = 3000;
+    const vaultType = 0;
+    const afterRelease = await this.reserveContract.releaseDates.call(vaultType) + duration.seconds(1);
+    // grant Vault
+    await this.reserveContract.grantTokens(this.beneficiary, vaultType, vaultValue, {
+      from: this.reserveAccount
+    }).should.be.fulfilled;
+    // revoke Vault
+    await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
+      from: this.reserveAccount
+    }).should.be.fulfilled;
+    const initialReserves = await this.token.balanceOf.call(this.reserveContract.address);
+    // (releaseRevokedBalance follow the same rules than release method in Vault)
+    await increaseTimeTo(afterRelease);
+
+    // releaseRevokedBalance
+    await this.reserveContract.releaseRevokedBalance(0, {
+      from: this.reserveAccount
+    }).should.be.fulfilled;
+
+    const finalReserves = await this.token.balanceOf.call(this.reserveContract.address);
+    finalReserves.should.be.bignumber.equal(initialReserves.plus(vaultValue));
   });
 });

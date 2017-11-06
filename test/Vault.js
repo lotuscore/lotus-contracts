@@ -19,13 +19,18 @@ contract('LotusVault', (accounts) => {
   beforeEach(async function () {
     const releaseDate = latestTime() + duration.days(1);
     this.afterRelease = releaseDate + duration.seconds(1);
-    const releaseTime = this.afterRelease + duration.days(15);
+    this.releaseTime = this.afterRelease + duration.days(15);
     this.vaultOwner = accounts[1];
     this.beneficiary = accounts[2];
     this.token = await LotusToken.new(0x123, releaseDate);
-    this.vault = await Vault.new(this.token.address, this.beneficiary, releaseTime, { from: this.vaultOwner });
+    this.vault = await Vault.new(this.token.address, this.beneficiary, this.releaseTime, { from: this.vaultOwner });
     this.token.mint(this.vault.address, 100);
     this.token.mint(this.vaultOwner, 50);
+  });
+  it('should prevent create a vault with the owner as beneficiary', async function () {
+    await Vault.new(this.token.address, this.vaultOwner, this.releaseTime, {
+      from: this.vaultOwner
+    }).should.be.rejectedWith(EVMThrow);
   });
   it('should claim change the revocable state to false', async function () {
     (await this.vault.revocable.call()).should.be.true;
@@ -36,39 +41,29 @@ contract('LotusVault', (accounts) => {
     this.vaultOwner.should.be.not.equal(this.beneficiary);
     await this.vault.claim({ from: this.vaultOwner }).should.be.rejectedWith(EVMThrow);
   });
-  describe('after afterRelease', () => {
-    beforeEach(async function () {
-      this.vaultBalance = await this.token.balanceOf(this.vault.address);
-      this.vaultOwnerBalance = await this.token.balanceOf(this.vaultOwner);
+  it('should revoke modify the beneficiary to contract owner', async function () {
+    (await this.vault.beneficiary.call()).should.be.not.equal(this.vaultOwner);
+    await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
+    (await this.vault.beneficiary.call()).should.be.equal(this.vaultOwner);
+  });
+  it('should revoke change the revocable state to false', async function () {
+    (await this.vault.revocable.call()).should.be.true;
+    await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
+    (await this.vault.revocable.call()).should.be.false;
+  });
+  it('should revoke prevent non-owners from execution', async function () {
+    this.vaultOwner.should.be.not.equal(this.beneficiary);
+    await this.vault.revoke({ from: this.beneficiary }).should.be.rejectedWith(EVMThrow);
+  });
+  it('should revoke fails when is `revocable` is false', async function () {
+    await this.vault.claim({ from: this.beneficiary }).should.be.fulfilled;
+    (await this.vault.revocable.call()).should.be.false;
 
-      this.vaultBalance.should.be.bignumber.equal(100);
-      this.vaultOwnerBalance.should.be.bignumber.equal(50);
-
-      await increaseTimeTo(this.afterRelease);
-    });
-    it('should revoke modify the current balance to zero', async function () {
-      await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
-      (await this.token.balanceOf(this.vault.address)).should.be.bignumber.equal(0);
-    });
-    it('should increase owner balance to owner balance plus vault balance', async function () {
-      await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
-      (await this.token.balanceOf(this.vaultOwner)).should.be.bignumber.equal(
-        this.vaultOwnerBalance.plus(this.vaultBalance));
-    });
-    it('should revoke change the revocable state to false', async function () {
-      (await this.vault.revocable.call()).should.be.true;
-      await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
-      (await this.vault.revocable.call()).should.be.false;
-    });
-    it('should revoke prevent non-owners from execution', async function () {
-      this.vaultOwner.should.be.not.equal(this.beneficiary);
-      await this.vault.revoke({ from: this.beneficiary }).should.be.rejectedWith(EVMThrow);
-    });
-    it('should revoke fails when is `revocable` is false', async function () {
-      await this.vault.claim({ from: this.beneficiary }).should.be.fulfilled;
-      (await this.vault.revocable.call()).should.be.false;
-
-      await this.vault.revoke({ from: this.vaultOwner }).should.be.rejectedWith(EVMThrow);
-    });
+    await this.vault.revoke({ from: this.vaultOwner }).should.be.rejectedWith(EVMThrow);
+  });
+  it('should revoked be true after revoke', async function () {
+    (await this.vault.revoked.call()).should.be.false;
+    await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
+    (await this.vault.revoked.call()).should.be.true;
   });
 });
