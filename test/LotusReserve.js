@@ -68,19 +68,19 @@ contract('LotusReserve', (accounts) => {
   describe('grantTokens', () => {
     beforeEach(async function () {
       this.beneficiary = accounts[2];
-      await this.reserveContract.getGrant(this.beneficiary, 0).should.be.rejectedWith(EVMThrow);
+      await this.reserveContract.grants(this.beneficiary, 0).should.be.rejectedWith(EVMThrow);
     });
     it('should create a Vault and add it to `grants` list', async function () {
       await this.reserveContract.grantTokens(this.beneficiary, 0, 100, {
         from: this.reserveAccount
       }).should.be.fulfilled;
-      await this.reserveContract.getGrant(this.beneficiary, 0).should.be.fulfilled;
+      await this.reserveContract.grants(this.beneficiary, 0).should.be.fulfilled;
     });
     it('should the created Vault have the correct balance', async function () {
       await this.reserveContract.grantTokens(this.beneficiary, 0, 100, {
         from: this.reserveAccount
       }).should.be.fulfilled;
-      const vault = await this.reserveContract.getGrant.call(this.beneficiary, 0);
+      const vault = await this.reserveContract.grants.call(this.beneficiary, 0);
       (await this.token.balanceOf.call(vault)).should.be.bignumber.equal(100);
     });
     it('should the created Vault have the right releaseDate', async function () {
@@ -94,7 +94,7 @@ contract('LotusReserve', (accounts) => {
         await this.reserveContract.grantTokens(this.beneficiary, index, 100, {
           from: this.reserveAccount
         }).should.be.fulfilled;
-        vault = Vault.at(await this.reserveContract.getGrant.call(this.beneficiary, index));
+        vault = Vault.at(await this.reserveContract.grants.call(this.beneficiary, index));
         (await vault.releaseTime.call()).should.be.bignumber.equal(releaseDates[index]);
       }
     });
@@ -164,13 +164,13 @@ contract('LotusReserve', (accounts) => {
         it(`remove vault #${i}`, async function () {
           const index = 1 * (i - 1);
           const value = 111 * i;
-          const vault = Vault.at(await this.reserveContract.getGrant.call(this.beneficiary, index));
+          const vault = Vault.at(await this.reserveContract.grants.call(this.beneficiary, index));
 
           // checking preconditions
           (await vault.revocable.call()).should.be.true;
           (await vault.revoked.call()).should.be.false;
           (await this.token.balanceOf(vault.address)).should.be.bignumber.equal(value);
-          await this.reserveContract.getGrant.call(this.beneficiary, 2).should.be.fulfilled;
+          await this.reserveContract.grants.call(this.beneficiary, 2).should.be.fulfilled;
 
           // remove grant
           await this.reserveContract.revokeTokenGrant(this.beneficiary, index, {
@@ -179,13 +179,13 @@ contract('LotusReserve', (accounts) => {
 
           // actual test
           const remainValidVaults = [111, 222, 333].filter(x => x !== value);
-          const v1 = Number(await this.token.balanceOf(await this.reserveContract.getGrant.call(this.beneficiary, 0)));
-          const v2 = Number(await this.token.balanceOf(await this.reserveContract.getGrant.call(this.beneficiary, 1)));
+          const v1 = Number(await this.token.balanceOf(await this.reserveContract.grants.call(this.beneficiary, 0)));
+          const v2 = Number(await this.token.balanceOf(await this.reserveContract.grants.call(this.beneficiary, 1)));
 
           v1.should.be.bignumber.oneOf(remainValidVaults);
           v2.should.be.bignumber.oneOf(remainValidVaults);
           v1.should.be.not.equal(v2);
-          await this.reserveContract.getGrant.call(this.beneficiary, 2).should.be.rejectedWith(EVMThrow);
+          await this.reserveContract.grants.call(this.beneficiary, 2).should.be.rejectedWith(EVMThrow);
 
           // checking postconditions
           (await vault.revocable.call()).should.be.false;
@@ -195,20 +195,20 @@ contract('LotusReserve', (accounts) => {
       }
     });
     it('should Vault beneficiary be reserve contract owner', async function () {
-      await this.reserveContract.getGrant.call(this.beneficiary, 0).should.be.fulfilled;
-      await this.reserveContract.getGrant.call(this.reserveContract.address, 0).should.be.rejectedWith(EVMThrow);
-      // const vaultAddress = await this.reserveContract.getGrant.call(this.beneficiary, 0);
+      await this.reserveContract.grants.call(this.beneficiary, 0).should.be.fulfilled;
+      await this.reserveContract.grants.call(this.reserveContract.address, 0).should.be.rejectedWith(EVMThrow);
+      // const vaultAddress = await this.reserveContract.grants.call(this.beneficiary, 0);
       // (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(111);
       await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
         from: this.reserveAccount
       }).should.be.fulfilled;
       // (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(0);
-      await this.reserveContract.getGrant.call(this.beneficiary, 0).should.be.rejectedWith(EVMThrow);
-      await this.reserveContract.getGrant.call(this.reserveContract.address, 0).should.be.fulfilled;
+      await this.reserveContract.grants.call(this.beneficiary, 0).should.be.rejectedWith(EVMThrow);
+      await this.reserveContract.grants.call(this.reserveContract.address, 0).should.be.fulfilled;
 
     });
     it('should fails when the Vault was caimed', async function () {
-      const vault = Vault.at(await this.reserveContract.getGrant.call(this.beneficiary, 0));
+      const vault = Vault.at(await this.reserveContract.grants.call(this.beneficiary, 0));
       await vault.claim({ from: this.beneficiary }).should.be.fulfilled;
 
       await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {

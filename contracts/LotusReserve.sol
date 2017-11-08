@@ -27,10 +27,6 @@ contract LotusReserve is Ownable {
     token = _token;
   }
 
-  function getGrant(address _beneficiary, uint8 _index) public constant returns (address) {
-    return grants[_beneficiary][_index];
-  }
-
   /**
    * @dev Create a vault time locked to be released according to releaseDates array
    *
