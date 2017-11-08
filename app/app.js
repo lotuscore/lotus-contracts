@@ -1,14 +1,14 @@
-import "../stylesheets/app.css";
+import "./app.css";
 
 import Web3 from 'web3'
 import moment from 'moment'
 import rivets from 'rivets'
 import { default as contract } from 'truffle-contract'
 
-import lotus_presale_artifacts from '../../build/contracts/LotusPresale.json'
-import lotus_token_artifacts from '../../build/contracts/LotusToken.json'
-import lotus_reserve_artifacts from '../../build/contracts/LotusReserve.json'
-import vault_artifacts from '../../build/contracts/Vault.json'
+import lotus_presale_artifacts from '../build/contracts/LotusPresale.json'
+import lotus_token_artifacts from '../build/contracts/LotusToken.json'
+import lotus_reserve_artifacts from '../build/contracts/LotusReserve.json'
+import vault_artifacts from '../build/contracts/Vault.json'
 
 const LotusPresale = contract(lotus_presale_artifacts);
 const LotusToken = contract(lotus_token_artifacts);
