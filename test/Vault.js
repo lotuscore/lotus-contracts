@@ -1,5 +1,5 @@
-/* globals web3, require, artifacts, contract, describe, it, beforeEach, before */
-import { increaseTimeTo, duration } from 'zeppelin-solidity/test/helpers/increaseTime';
+/* globals web3, require, artifacts, contract, it, beforeEach, before */
+import { duration } from 'zeppelin-solidity/test/helpers/increaseTime';
 import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
 import { advanceBlock } from 'zeppelin-solidity/test/helpers/advanceToBlock';
@@ -37,6 +37,11 @@ contract('LotusVault', (accounts) => {
     await this.vault.claim({ from: this.beneficiary }).should.be.fulfilled;
     (await this.vault.revocable.call()).should.be.false;
   });
+  it('should claim fails if revocable state is false', async function () {
+    await this.vault.claim({ from: this.beneficiary }).should.be.fulfilled;
+    (await this.vault.revocable.call()).should.be.false;
+    await this.vault.claim({ from: this.beneficiary }).should.be.rejectedWith(EVMThrow);
+  });
   it('should claim prevent non-beneficiary from execution', async function () {
     this.vaultOwner.should.be.not.equal(this.beneficiary);
     await this.vault.claim({ from: this.vaultOwner }).should.be.rejectedWith(EVMThrow);
@@ -65,5 +70,9 @@ contract('LotusVault', (accounts) => {
     (await this.vault.revoked.call()).should.be.false;
     await this.vault.revoke({ from: this.vaultOwner }).should.be.fulfilled;
     (await this.vault.revoked.call()).should.be.true;
+  });
+  it('should balance method show the current token balance', async function () {
+    (await this.vault.balance.call()).should.be.bignumber.equal(
+      await this.token.balanceOf.call(this.vault.address));
   });
 });

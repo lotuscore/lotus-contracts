@@ -293,4 +293,8 @@ contract('LotusReserve', (accounts) => {
     const finalReserves = await this.token.balanceOf.call(this.reserveContract.address);
     finalReserves.should.be.bignumber.equal(initialReserves.plus(vaultValue));
   });
+  it('should balance method show the current token balance', async function () {
+    (await this.reserveContract.balance.call()).should.be.bignumber.equal(
+      await this.token.balanceOf.call(this.reserveContract.address));
+  });
 });

@@ -73,4 +73,7 @@ contract LotusReserve is Ownable {
     grants[this][_index].release();
   }
 
+  function balance() public constant returns (uint) {
+    return token.balanceOf(this);
+  }
 }

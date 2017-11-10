@@ -19,6 +19,7 @@ contract Vault is TokenTimelock, Ownable {
 
   function claim() public {
     require(msg.sender == beneficiary);
+    require(revocable);
     revocable = false;
     Claimed();
   }
@@ -32,6 +33,10 @@ contract Vault is TokenTimelock, Ownable {
 
   function revoked() public constant returns (bool) {
     return beneficiary == owner;
+  }
+
+  function balance() public constant returns (uint) {
+    return token.balanceOf(this);
   }
 
 }
