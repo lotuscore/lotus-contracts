@@ -2,9 +2,6 @@
 import { increaseTimeTo, duration } from 'zeppelin-solidity/test/helpers/increaseTime';
 import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
-import {
-  INITIAL_SUPPLY // BigNumber(400000000 * (10 ** 18))
-} from './helpers/globals';
 
 const BigNumber = web3.BigNumber;
 require('chai')
@@ -12,22 +9,33 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
-const LotusToken = artifacts.require('./LotusToken.sol');
 const LotusReserve = artifacts.require('./LotusReserve.sol');
+const LotusToken = artifacts.require('./LotusToken.sol');
 const Vault = artifacts.require('./Vault.sol');
 
 contract('LotusReserve', (accounts) => {
 
   beforeEach(async function () {
-    const releaseDate = latestTime() + duration.days(1);
+    const startDate = latestTime() + duration.days(15);
+    const endTime = startDate + duration.days(1);
+    const releaseDate = endTime + duration.days(1);
+    this.reserveSupply = new BigNumber(400000000 * (10 ** 18));
     this.afterRelease = releaseDate + duration.seconds(1);
     this.reserveAccount = accounts[1];
     this.token = await LotusToken.new(this.reserveAccount, releaseDate);
     this.reserveContract = new LotusReserve(await this.token.reserve.call());
+
+    // init the reserves
+    await this.token.mint(this.reserveContract.address, this.reserveSupply);
+    await this.reserveContract.init(this.reserveSupply);
   });
-  it('should reserves balance be equal to 400000000*10^18 LTS', async function () {
+  it('should method `init` fails when it is called more than once ', async function () {
+    // it was already initializated then presale.init
+    await this.reserveContract.init(this.reserveSupply).should.be.rejectedWith(EVMThrow);
+  });
+  it('should reserves balance be equal to reserveSupply', async function () {
     const reserveAmount = await this.token.balanceOf.call(this.reserveContract.address);
-    const reserveExpected = INITIAL_SUPPLY;
+    const reserveExpected = this.reserveSupply;
     reserveAmount.should.be.bignumber.equal(reserveExpected);
   });
   it('should reserveAccount be the reserve owner', async function() {
@@ -237,36 +245,6 @@ contract('LotusReserve', (accounts) => {
         from: nonOwner
       }).should.be.rejectedWith(EVMThrow);
     });
-    it('should add the correct value to the target reserve', async function () {
-      const vaultValue = 111;
-      await this.reserveContract.grantTokens(this.beneficiary, 1, vaultValue, {
-        from: this.reserveAccount
-      }).should.be.fulfilled;
-      await this.reserveContract.grantTokens(this.beneficiary, 2, vaultValue, {
-        from: this.reserveAccount
-      }).should.be.fulfilled;
-
-      const initialReserves = [
-        await this.reserveContract.reserves.call(0),
-        await this.reserveContract.reserves.call(1),
-        await this.reserveContract.reserves.call(2)
-      ];
-
-      for (var index=0; index < 3; index++) {
-        await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
-          from: this.reserveAccount
-        }).should.be.fulfilled;
-      }
-
-      const finalReserves = [
-        await this.reserveContract.reserves.call(0),
-        await this.reserveContract.reserves.call(1),
-        await this.reserveContract.reserves.call(2)
-      ];
-      finalReserves.forEach((finalReserve, index) => {
-        finalReserve.should.be.bignumber.equal(initialReserves[index].plus(vaultValue));
-      });
-    });
   });
   it('should releaseRevokedBalance increase contract balance to Vault balance', async function () {
     this.beneficiary = accounts[2];
@@ -282,6 +260,7 @@ contract('LotusReserve', (accounts) => {
       from: this.reserveAccount
     }).should.be.fulfilled;
     const initialReserves = await this.token.balanceOf.call(this.reserveContract.address);
+    const initialReservesRecord = await this.reserveContract.reserves.call(vaultType);
     // (releaseRevokedBalance follow the same rules than release method in Vault)
     await increaseTimeTo(afterRelease);
 
@@ -291,7 +270,9 @@ contract('LotusReserve', (accounts) => {
     }).should.be.fulfilled;
 
     const finalReserves = await this.token.balanceOf.call(this.reserveContract.address);
+    const finalReservesRecord = await this.reserveContract.reserves.call(vaultType);
     finalReserves.should.be.bignumber.equal(initialReserves.plus(vaultValue));
+    finalReservesRecord.should.be.bignumber.equal(initialReservesRecord.plus(vaultValue));
   });
   it('should balance method show the current token balance', async function () {
     (await this.reserveContract.balance.call()).should.be.bignumber.equal(

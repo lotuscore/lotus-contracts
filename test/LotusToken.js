@@ -3,9 +3,6 @@ import { increaseTimeTo, duration } from 'zeppelin-solidity/test/helpers/increas
 import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import { advanceBlock } from 'zeppelin-solidity/test/helpers/advanceToBlock';
 import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
-import {
-  INITIAL_SUPPLY // BigNumber(400000000 * (10 ** 18))
-} from './helpers/globals';
 
 const BigNumber = web3.BigNumber;
 require('chai')
@@ -30,10 +27,10 @@ contract('LotusToken', (accounts) => {
     this.token = await LotusToken.new(reserveAccount, releaseDate);
   });
 
-  it('should reserves be equal to totalSupply equal to 400000000*10^18 LTS', async function () {
+  it('should reserves be equal to totalSupply equal to 0 LTS', async function () {
     const reserveContract = await this.token.reserve.call();
     const reserveAmount = await this.token.balanceOf.call(reserveContract);
-    const reserveExpected = INITIAL_SUPPLY;
+    const reserveExpected = 0;
 
     reserveAmount.should.be.bignumber.equal(await this.token.totalSupply.call());
     reserveAmount.should.be.bignumber.equal(reserveExpected);

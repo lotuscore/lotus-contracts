@@ -30,20 +30,21 @@ contract('LotusPresale', (accounts) => {
     this.crowdsale = await LotusCrowdsale.new(
       startDate + duration.weeks(4), endTime + duration.weeks(4), 12000, cap, fundAccount);
     this.token = await LotusToken.new(this.reserveAccount, releaseDate);
+    await this.token.transferOwnership(this.presale.address);
   });
 
-  it('should method `use` fails when token releaseDate is lower than endTime ', async function () {
+  it('should method `init` fails when token releaseDate is lower than endTime ', async function () {
     const invalidToken = await LotusToken.new(this.reserveAccount, this.beforeEnd);
-    await this.presale.use(invalidToken.address).should.be.rejectedWith(EVMThrow);
+    await this.presale.init(invalidToken.address).should.be.rejectedWith(EVMThrow);
   });
-  it('should method `use` change the used token ', async function () {
+  it('should method `init` change the used token ', async function () {
     (await this.presale.token.call()).should.be.not.equal(this.token.address);
-    await this.presale.use(this.token.address).should.be.fulfilled;
+    await this.presale.init(this.token.address).should.be.fulfilled;
     (await this.presale.token.call()).should.be.equal(this.token.address);
   });
-  it('should method `use` fails when it is used more than once ', async function () {
-    await this.presale.use(this.token.address).should.be.fulfilled;
-    await this.presale.use(this.token.address).should.be.rejectedWith(EVMThrow);
+  it('should method `init` fails when it is used more than once ', async function () {
+    await this.presale.init(this.token.address).should.be.fulfilled;
+    await this.presale.init(this.token.address).should.be.rejectedWith(EVMThrow);
   });
   it('should transferTokenOwnership fails when it is called before endDate', async function () {
     await this.presale.transferTokenOwnership(this.crowdsale.address, { from: this.reserveAccount }).should.be.rejectedWith(EVMThrow);
@@ -51,8 +52,7 @@ contract('LotusPresale', (accounts) => {
   describe('after endTime transferTokenOwnership', () => {
     beforeEach(async function() {
       await increaseTimeTo(this.afterEnd);
-      await this.presale.use(this.token.address).should.be.fulfilled;
-      await this.token.transferOwnership(this.presale.address).should.be.fulfilled;
+      await this.presale.init(this.token.address).should.be.fulfilled;
     });
     it('should transfer the token ownership to a crowdsale contract', async function () {
       await this.presale.transferTokenOwnership(this.crowdsale.address, { from: this.reserveAccount }).should.be.fulfilled;
