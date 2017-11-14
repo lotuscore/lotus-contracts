@@ -2,19 +2,12 @@ require('babel-register')({
     ignore: /node_modules\/(?!zeppelin-solidity)/
 });
 require('babel-polyfill')
-const HDWalletProvider = require("truffle-hdwallet-provider");
-
 module.exports = {
   networks: {
     development: {
       host: "localhost",
       port: 8545,
       network_id: "*" // Match any network id
-    },
-    hdwallet: {
-      provider: new HDWalletProvider(process.env.MNEMONIC,
-        "https://rinkeby.infura.io/"+process.env.INFURA_KEY),
-      network_id: 3
     },
     rinkeby: {
       host: "localhost",

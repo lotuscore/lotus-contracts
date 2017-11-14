@@ -1,0 +1,9 @@
+<div id="App">
+    <h1>Accounts</h1>
+    <p>{this.state.title}</p>
+    <ul>
+        <li rt-repeat="account in this.state.wallet">
+            <p>{account.address}</p>
+        </li>
+    </ul>
+</div>

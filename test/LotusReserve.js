@@ -162,8 +162,9 @@ contract('LotusReserve', (accounts) => {
       });
       for (let i=1; i<=3; i++) {
         it(`remove vault #${i}`, async function () {
+          const bn = (x) => new BigNumber(x)
           const index = 1 * (i - 1);
-          const value = 111 * i;
+          const value = bn(111 * i);
           const vault = Vault.at(await this.reserveContract.grants.call(this.beneficiary, index));
 
           // checking preconditions
@@ -171,26 +172,31 @@ contract('LotusReserve', (accounts) => {
           (await vault.revoked.call()).should.be.false;
           (await this.token.balanceOf(vault.address)).should.be.bignumber.equal(value);
           await this.reserveContract.grants.call(this.beneficiary, 2).should.be.fulfilled;
-
           // remove grant
           await this.reserveContract.revokeTokenGrant(this.beneficiary, index, {
             from: this.reserveAccount
           }).should.be.fulfilled;
 
           // actual test
-          const remainValidVaults = [111, 222, 333].filter(x => x !== value);
-          const v1 = Number(await this.token.balanceOf(await this.reserveContract.grants.call(this.beneficiary, 0)));
-          const v2 = Number(await this.token.balanceOf(await this.reserveContract.grants.call(this.beneficiary, 1)));
+          const remainValidVaults = [bn(111), bn(222), bn(333)].filter(x => !x.equals(value));
 
-          v1.should.be.bignumber.oneOf(remainValidVaults);
-          v2.should.be.bignumber.oneOf(remainValidVaults);
-          v1.should.be.not.equal(v2);
+
+          const vault1 = await this.reserveContract.grants.call(this.beneficiary, 0);
+          const balanceVault1 = await this.token.balanceOf(vault1);
+          const vault2 = await this.reserveContract.grants.call(this.beneficiary, 1);
+          const balanceVault2 = await this.token.balanceOf(vault2);
+
+          // use assert(<condition>) instead `balanceVaultX.should.be.bignumber.oneOf(remainValidVaults)`
+          // because `oneOf` is not supported by chai-bignumber
+          assert(remainValidVaults[0].equals(balanceVault1) || remainValidVaults[1].equals(balanceVault1));
+          assert(remainValidVaults[0].equals(balanceVault2) || remainValidVaults[1].equals(balanceVault2));
+          balanceVault1.should.be.not.bignumber.equal(balanceVault2);
+
           await this.reserveContract.grants.call(this.beneficiary, 2).should.be.rejectedWith(EVMThrow);
 
           // checking postconditions
           (await vault.revocable.call()).should.be.false;
           (await vault.revoked.call()).should.be.true;
-
         });
       }
     });
