@@ -11,14 +11,8 @@ contract LotusToken is MintableToken {
   LotusReserve public reserve;
 
   function LotusToken(address reserveAccount, uint64 _releaseDate) {
-    // `reserveSupply` hardcoded to match with `reserves` in LotusReserve.sol contract
-    uint reserveSupply = 400000000 * (10 ** decimals);
-
-    reserve = new LotusReserve(this, _releaseDate);
     releaseDate = _releaseDate;
-    totalSupply = reserveSupply;
-    balances[reserve] = reserveSupply;
-
+    reserve = new LotusReserve(this);
     reserve.transferOwnership(reserveAccount);
   }
 

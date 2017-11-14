@@ -14,12 +14,18 @@ contract LotusPresale is CappedCrowdsale {
     Crowdsale(_startTime, _endTime, _rate, fundAccount) {
   }
 
-  function use(address tokenAddress) public {
+  function init(address tokenAddress) public {
     require(initialized == false);
     require(LotusToken(tokenAddress).releaseDate() > endTime);
+    initialized = true;
 
     token = LotusToken(tokenAddress);
-    initialized = true;
+
+    LotusReserve reserve = LotusReserve(LotusToken(tokenAddress).reserve());
+    uint reserveSupply = 400000000 * (10 ** 18);
+
+    token.mint(reserve, reserveSupply);
+    reserve.init(reserveSupply);
   }
 
   /**

@@ -8,23 +8,37 @@ import './Vault.sol';
 contract LotusReserve is Ownable {
   using SafeMath for uint256;
 
+  bool initialized = false;
   LotusToken public token;
   mapping (address => Vault[]) public grants;
   event tokensGranted(address _beneficiary, uint8 _type, uint _value);
 
-  // use community-partnership-team order as the pattern for the arrays below
-  uint[3] public reserves = [
-    100000000 * (10 ** 18),
-    100000000 * (10 ** 18),
-    200000000 * (10 ** 18)
-  ]; // total reserves 400000000 * (10 ** 18); should match with this contract balance
+  uint[3] public reserves;
   uint64[3] public releaseDates;
 
-  function LotusReserve(LotusToken _token, uint64 releaseDate) {
-    releaseDates[0] = releaseDate + 4 weeks;
-    releaseDates[1] = releaseDate + 8 weeks;
-    releaseDates[2] = releaseDate + 12 weeks;
+  function LotusReserve(LotusToken _token) {
     token = _token;
+  }
+
+  function init(uint totalReserves) {
+    require(initialized == false);
+    require(totalReserves == token.balanceOf(this));
+    uint64 tokenReleaseDate = uint64(token.releaseDate());
+    initialized = true;
+
+    /*
+     * 0 == community
+     * 1 == marketing and partnerships
+     * 2 == development team and advisors
+     */
+
+    reserves[0] = totalReserves / 4;
+    reserves[1] = totalReserves / 4;
+    reserves[2] = totalReserves / 2;
+
+    releaseDates[0] = tokenReleaseDate + 4 weeks;
+    releaseDates[1] = tokenReleaseDate + 8 weeks;
+    releaseDates[2] = tokenReleaseDate + 16 weeks;
   }
 
   /**
@@ -35,6 +49,7 @@ contract LotusReserve is Ownable {
    * @param _value The amount of tokens to be locked in the vault.
    */
   function grantTokens(address _beneficiary, uint8 _type, uint _value) onlyOwner public {
+    require(initialized);
     require(_type <= 2);
     require(token.balanceOf(this) >= _value);
 
@@ -51,14 +66,7 @@ contract LotusReserve is Ownable {
 
   function revokeTokenGrant(address _holder, uint256 _grantId) onlyOwner public {
     Vault vault = grants[_holder][_grantId];
-    uint64 releaseTime = vault.releaseTime();
-    uint8 _type = releaseTime == releaseDates[0] ? 0 : releaseTime == releaseDates[1] ? 1 : 2;
-
-    uint vaultValue = token.balanceOf(vault);
     vault.revoke();
-
-    // update reserves
-    reserves[_type] = reserves[_type].add(vaultValue);
 
     // remove vault from array
     delete grants[_holder][_grantId];
@@ -70,7 +78,12 @@ contract LotusReserve is Ownable {
   }
 
   function releaseRevokedBalance(uint _index) onlyOwner public {
-    grants[this][_index].release();
+    Vault vault = grants[this][_index];
+    uint vaultValue = token.balanceOf(vault);
+    uint64 releaseTime = vault.releaseTime();
+    uint8 _type = releaseTime == releaseDates[0] ? 0 : releaseTime == releaseDates[1] ? 1 : 2;
+    reserves[_type] = reserves[_type].add(vaultValue);
+    vault.release();
   }
 
   function balance() public constant returns (uint) {
