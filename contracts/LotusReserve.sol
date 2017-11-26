@@ -1,6 +1,7 @@
 pragma solidity ^0.4.11;
 import 'zeppelin-solidity/contracts/ownership/Ownable.sol';
 import 'zeppelin-solidity/contracts/token/MintableToken.sol';
+import './PostsalePool.sol';
 import './LotusToken.sol';
 import './Vault.sol';
 
@@ -9,7 +10,10 @@ contract LotusReserve is Ownable {
   using SafeMath for uint256;
 
   bool initialized = false;
+  uint initialReserves;
   LotusToken public token;
+  PostsalePool postsalePool;
+  uint postsaleTokens;
   mapping (address => Vault[]) public grants;
   event tokensGranted(address _beneficiary, uint8 _type, uint _value);
 
@@ -20,11 +24,13 @@ contract LotusReserve is Ownable {
     token = _token;
   }
 
-  function init(uint totalReserves) {
+  function init(uint totalReserves, PostsalePool _postsalePool) {
     require(initialized == false);
     require(totalReserves == token.balanceOf(this));
     uint64 tokenReleaseDate = uint64(token.releaseDate());
     initialized = true;
+    initialReserves = totalReserves;
+    postsalePool = _postsalePool;
 
     /*
      * 0 == community
@@ -32,9 +38,9 @@ contract LotusReserve is Ownable {
      * 2 == development team and advisors
      */
 
-    reserves[0] = totalReserves / 4;
-    reserves[1] = totalReserves / 4;
-    reserves[2] = totalReserves / 2;
+    reserves[0] = totalReserves.div(4);
+    reserves[1] = totalReserves.div(4);
+    reserves[2] = totalReserves.div(2);
 
     releaseDates[0] = tokenReleaseDate + 4 weeks;
     releaseDates[1] = tokenReleaseDate + 8 weeks;
@@ -84,6 +90,22 @@ contract LotusReserve is Ownable {
     uint8 _type = releaseTime == releaseDates[0] ? 0 : releaseTime == releaseDates[1] ? 1 : 2;
     reserves[_type] = reserves[_type].add(vaultValue);
     vault.release();
+  }
+
+  function claimPostsale() {
+    postsaleTokens = postsalePool.allowance(this);
+
+    reserves[0] = reserves[0].add(postsaleTokens.div(4));
+    reserves[1] = reserves[1].add(postsaleTokens.div(4));
+    reserves[2] = reserves[2].add(postsaleTokens.div(2));
+
+    postsalePool.claim(this);
+  }
+
+  function createPostsaleVaults() public {
+    // for vault in vaults:
+    //     uint postsaleCut = token.balanceOf(vault).mul(postsaleTokens).div(initialReserves)
+    //     grantTokens(vault.beneficiary, vault.type, postsaleCut)
   }
 
   function balance() public constant returns (uint) {

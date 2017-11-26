@@ -6,7 +6,7 @@ import './LotusReserve.sol';
 contract LotusToken is MintableToken {
   string public name = 'Lotus Token';
   string public symbol = 'LTS';
-  uint public decimals = 18;
+  uint public decimals = 8;
   uint public releaseDate;
   LotusReserve public reserve;
 

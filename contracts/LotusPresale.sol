@@ -4,10 +4,12 @@ import 'zeppelin-solidity/contracts/crowdsale/CappedCrowdsale.sol';
 import 'zeppelin-solidity/contracts/crowdsale/Crowdsale.sol';
 import './LotusToken.sol';
 import './LotusReserve.sol';
+import './PostsalePool.sol';
 
 contract LotusPresale is CappedCrowdsale {
 
   bool initialized = false;
+  PostsalePool postsalePool;
 
   function LotusPresale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, address fundAccount)
     CappedCrowdsale(_cap)
@@ -22,10 +24,34 @@ contract LotusPresale is CappedCrowdsale {
     token = LotusToken(tokenAddress);
 
     LotusReserve reserve = LotusReserve(LotusToken(tokenAddress).reserve());
-    uint reserveSupply = 400000000 * (10 ** 18);
+    uint tokensSupply = 1000000000 * (10 ** 18);
+    uint reserveSupply = tokensSupply.mul(3).div(10);
+
+    postsalePool = new PostsalePool(tokenAddress, tokensSupply);
+    postsalePool.approve(reserve, reserveSupply);
 
     token.mint(reserve, reserveSupply);
-    reserve.init(reserveSupply);
+    reserve.init(reserveSupply, postsalePool);
+  }
+
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate).div(10 ** 10);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    postsalePool.approve(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
   }
 
   /**
