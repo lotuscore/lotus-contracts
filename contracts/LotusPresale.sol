@@ -9,7 +9,7 @@ import './PostsalePool.sol';
 contract LotusPresale is CappedCrowdsale {
 
   bool initialized = false;
-  PostsalePool postsalePool;
+  PostsalePool public postsalePool;
 
   function LotusPresale(uint256 _startTime, uint256 _endTime, uint256 _rate, uint256 _cap, address fundAccount)
     CappedCrowdsale(_cap)
@@ -24,7 +24,7 @@ contract LotusPresale is CappedCrowdsale {
     token = LotusToken(tokenAddress);
 
     LotusReserve reserve = LotusReserve(LotusToken(tokenAddress).reserve());
-    uint tokensSupply = 1000000000 * (10 ** 18);
+    uint tokensSupply = 1000000000 * (10 ** 8);
     uint reserveSupply = tokensSupply.mul(3).div(10);
 
     postsalePool = new PostsalePool(tokenAddress, tokensSupply);
