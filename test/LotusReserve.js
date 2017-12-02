@@ -3,6 +3,10 @@ import { increaseTimeTo, duration } from 'zeppelin-solidity/test/helpers/increas
 import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
 
+import {
+  TOKEN_SUPPLY // BigNumber(1000000000 * (10 ** 8))
+} from './helpers/globals';
+
 const BigNumber = web3.BigNumber;
 require('chai')
   .use(require('chai-as-promised'))
@@ -11,6 +15,7 @@ require('chai')
 
 const LotusReserve = artifacts.require('./LotusReserve.sol');
 const LotusToken = artifacts.require('./LotusToken.sol');
+const PostsalePool = artifacts.require('./PostsalePool.sol');
 const Vault = artifacts.require('./Vault.sol');
 
 contract('LotusReserve', (accounts) => {
@@ -19,27 +24,31 @@ contract('LotusReserve', (accounts) => {
     const startDate = latestTime() + duration.days(15);
     const endTime = startDate + duration.days(1);
     const releaseDate = endTime + duration.days(1);
-    this.reserveSupply = new BigNumber(400000000 * (10 ** 18));
     this.afterRelease = releaseDate + duration.seconds(1);
     this.reserveAccount = accounts[1];
     this.token = await LotusToken.new(this.reserveAccount, releaseDate);
-    this.reserveContract = new LotusReserve(await this.token.reserve.call());
+
+    this.reserveSupply = TOKEN_SUPPLY.mul(3).div(10);
+    this.postsalePool = new PostsalePool(this.token.address, TOKEN_SUPPLY);
+    this.reserveContract = LotusReserve.at(await this.token.reserve.call());
+
+    // add token to reserve
     await this.token.mint(this.reserveContract.address, this.reserveSupply);
   });
   it('should `init` method success when it is initiated with the exact reserveSupply amount', async function () {
-    await this.reserveContract.init(this.reserveSupply).should.be.fulfilled;
+    await this.reserveContract.init(this.reserveSupply, this.postsalePool.address).should.be.fulfilled;
   });
   it('should `init` method fails when it is initiated without the exact reserveSupply amount', async function () {
-    await this.reserveContract.init(this.reserveSupply.plus(1)).should.be.rejectedWith(EVMThrow);
+    await this.reserveContract.init(this.reserveSupply.plus(1), this.postsalePool.address).should.be.rejectedWith(EVMThrow);
   });
   it('should `init` method fails when it is called more than once ', async function () {
-    await this.reserveContract.init(this.reserveSupply).should.be.fulfilled;
-    await this.reserveContract.init(this.reserveSupply).should.be.rejectedWith(EVMThrow);
+    await this.reserveContract.init(this.reserveSupply, this.postsalePool.address).should.be.fulfilled;
+    await this.reserveContract.init(this.reserveSupply, this.postsalePool.address).should.be.rejectedWith(EVMThrow);
   });
   describe('after initialization', () => {
     beforeEach(async function () {
       // await this.token.mint(this.reserveContract.address, this.reserveSupply);
-      await this.reserveContract.init(this.reserveSupply);
+      await this.reserveContract.init(this.reserveSupply, this.postsalePool.address);
     });
 
     it('should reserves balance be equal to reserveSupply', async function () {
@@ -179,7 +188,7 @@ contract('LotusReserve', (accounts) => {
         });
         for (let i=1; i<=3; i++) {
           it(`remove vault #${i}`, async function () {
-            const bn = (x) => new BigNumber(x)
+            const bn = (x) => new BigNumber(x);
             const index = 1 * (i - 1);
             const value = bn(111 * i);
             const vault = Vault.at(await this.reserveContract.grants.call(this.beneficiary, index));
@@ -295,3 +304,9 @@ contract('LotusReserve', (accounts) => {
     });
   });
 });
+
+
+// test getVaultType: if type = 1, 2, 3
+// grantTokens crea un registro en grantedVaults
+// claimPostsale le da el allowance correcto a cada reserva
+// createPostsaleVaults recorre grantedVaults y le da lo correcto a cada uno
