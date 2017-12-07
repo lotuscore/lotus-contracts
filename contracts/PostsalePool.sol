@@ -2,7 +2,6 @@ pragma solidity ^0.4.11;
 
 import 'zeppelin-solidity/contracts/math/SafeMath.sol';
 import './LotusToken.sol';
-import './LotusReserve.sol';
 
 contract PostsalePool {
   using SafeMath for uint256;
@@ -10,8 +9,8 @@ contract PostsalePool {
   LotusToken public token;
   mapping (address => uint) public holders;
 
-  bool closed = false;
-  uint tokensSold;
+  bool public closed = false;
+  uint pool;
   uint tokensSupply;
 
   modifier onlyTokenOwner() {
@@ -32,14 +31,13 @@ contract PostsalePool {
   function close() onlyTokenOwner public {
     require(closed == false);
     require(token.balanceOf(this) > 0);
-    tokensSold = token.balanceOf(this);
+    pool = token.balanceOf(this);
     closed = true;
-    LotusReserve(token.reserve()).claimPostsale();
   }
 
   function allowance(address _holder) public constant returns (uint) {
     require(closed);
-    return holders[_holder].mul(tokensSupply.sub(tokensSold)).div(tokensSold);
+    return holders[_holder].mul(pool).div(tokensSupply);
   }
 
   function claim(address _holder) public {
