@@ -28,10 +28,11 @@ contract LotusPresale is CappedCrowdsale {
     uint reserveSupply = tokensSupply.mul(3).div(10);
 
     postsalePool = new PostsalePool(tokenAddress, tokensSupply);
-    postsalePool.approve(reserve, reserveSupply);
 
     token.mint(reserve, reserveSupply);
-    reserve.init(reserveSupply, postsalePool);
+    postsalePool.approve(reserve, reserveSupply);
+
+    reserve.init(postsalePool);
   }
 
   // low level token purchase function

@@ -27,12 +27,12 @@ contract LotusReserve is Ownable {
     token = _token;
   }
 
-  function init(uint256 totalReserves, PostsalePool _postsalePool) {
+  function init(PostsalePool _postsalePool) {
     require(initialized == false);
-    require(totalReserves == token.balanceOf(this));
+    require(token.balanceOf(this) > 0);
     uint64 tokenReleaseDate = uint64(token.releaseDate());
     initialized = true;
-    initialReserves = totalReserves;
+    initialReserves = token.balanceOf(this);
     postsalePool = _postsalePool;
 
     /*
@@ -41,9 +41,9 @@ contract LotusReserve is Ownable {
      * 2 == development team and advisors
      */
 
-    reserves[0] = totalReserves.div(4);
-    reserves[1] = totalReserves.div(4);
-    reserves[2] = totalReserves.div(2);
+    reserves[0] = initialReserves.div(4);
+    reserves[1] = initialReserves.div(4);
+    reserves[2] = initialReserves.div(2);
 
     releaseDates[0] = tokenReleaseDate + 4 weeks;
     releaseDates[1] = tokenReleaseDate + 8 weeks;
@@ -68,7 +68,9 @@ contract LotusReserve is Ownable {
 
     Vault vault = new Vault(token, _beneficiary, releaseDates[_type]);
     grants[_beneficiary].push(vault);
-    grantedVaults.push(vault);
+    if (postsalePool.closed() == false) {
+      grantedVaults.push(vault);
+    }
 
     token.transfer(vault, _value);
     tokensGranted(_beneficiary, _type, _value);
@@ -102,16 +104,13 @@ contract LotusReserve is Ownable {
 
   function claimPostsale() public {
     postsaleTokens = postsalePool.allowance(this);
-
     reserves[0] = reserves[0].add(postsaleTokens.div(4));
     reserves[1] = reserves[1].add(postsaleTokens.div(4));
     reserves[2] = reserves[2].add(postsaleTokens.div(2));
-
     postsalePool.claim(this);
   }
 
-  function createPostsaleVaults() public {
-    // TODO: fix it
+  function createPostsaleVaults() onlyOwner public {
     require(postsaleTokens > 0);
     uint256 postsaleCut;
     uint256 vaultBalance;
