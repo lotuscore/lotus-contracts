@@ -6,6 +6,7 @@ import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
 import {
   TOKEN_SUPPLY // BigNumber(1000000000 * (10 ** 8))
 } from './helpers/globals';
+const LTS = 10 ** 8;
 
 const BigNumber = web3.BigNumber;
 require('chai')
@@ -29,26 +30,26 @@ contract('LotusReserve', (accounts) => {
     this.token = await LotusToken.new(this.reserveAccount, releaseDate);
 
     this.reserveSupply = TOKEN_SUPPLY.mul(3).div(10);
-    this.postsalePool = new PostsalePool(this.token.address, TOKEN_SUPPLY);
+    this.postsalePool = await PostsalePool.new(this.token.address, TOKEN_SUPPLY);
     this.reserveContract = LotusReserve.at(await this.token.reserve.call());
 
-    // add token to reserve
+  });
+  it('should `init` method success when it is initiated with positive balance', async function () {
     await this.token.mint(this.reserveContract.address, this.reserveSupply);
+    await this.reserveContract.init(this.postsalePool.address).should.be.fulfilled;
   });
-  it('should `init` method success when it is initiated with the exact reserveSupply amount', async function () {
-    await this.reserveContract.init(this.reserveSupply, this.postsalePool.address).should.be.fulfilled;
-  });
-  it('should `init` method fails when it is initiated without the exact reserveSupply amount', async function () {
-    await this.reserveContract.init(this.reserveSupply.plus(1), this.postsalePool.address).should.be.rejectedWith(EVMThrow);
+  it('should `init` method fails when it is initiated without balance', async function () {
+    await this.reserveContract.init(this.postsalePool.address).should.be.rejectedWith(EVMThrow);
   });
   it('should `init` method fails when it is called more than once ', async function () {
-    await this.reserveContract.init(this.reserveSupply, this.postsalePool.address).should.be.fulfilled;
-    await this.reserveContract.init(this.reserveSupply, this.postsalePool.address).should.be.rejectedWith(EVMThrow);
+    await this.token.mint(this.reserveContract.address, this.reserveSupply);
+    await this.reserveContract.init(this.postsalePool.address).should.be.fulfilled;
+    await this.reserveContract.init(this.postsalePool.address).should.be.rejectedWith(EVMThrow);
   });
   describe('after initialization', () => {
     beforeEach(async function () {
-      // await this.token.mint(this.reserveContract.address, this.reserveSupply);
-      await this.reserveContract.init(this.reserveSupply, this.postsalePool.address);
+      await this.token.mint(this.reserveContract.address, this.reserveSupply);
+      await this.reserveContract.init(this.postsalePool.address);
     });
 
     it('should reserves balance be equal to reserveSupply', async function () {
@@ -212,10 +213,10 @@ contract('LotusReserve', (accounts) => {
             const vault2 = await this.reserveContract.grants.call(this.beneficiary, 1);
             const balanceVault2 = await this.token.balanceOf(vault2);
 
-            // use assert(<condition>) instead `balanceVaultX.should.be.bignumber.oneOf(remainValidVaults)`
+            // use assert <condition> instead `balanceVaultX.should.be.bignumber.oneOf(remainValidVaults)`
             // because `oneOf` is not supported by chai-bignumber
-            assert(remainValidVaults[0].equals(balanceVault1) || remainValidVaults[1].equals(balanceVault1));
-            assert(remainValidVaults[0].equals(balanceVault2) || remainValidVaults[1].equals(balanceVault2));
+            (remainValidVaults[0].equals(balanceVault1) || remainValidVaults[1].equals(balanceVault1)).should.be.true;
+            (remainValidVaults[0].equals(balanceVault2) || remainValidVaults[1].equals(balanceVault2)).should.be.true;
             balanceVault1.should.be.not.bignumber.equal(balanceVault2);
 
             await this.reserveContract.grants.call(this.beneficiary, 2).should.be.rejectedWith(EVMThrow);
@@ -229,12 +230,9 @@ contract('LotusReserve', (accounts) => {
       it('should Vault beneficiary be reserve contract owner', async function () {
         await this.reserveContract.grants.call(this.beneficiary, 0).should.be.fulfilled;
         await this.reserveContract.grants.call(this.reserveContract.address, 0).should.be.rejectedWith(EVMThrow);
-        // const vaultAddress = await this.reserveContract.grants.call(this.beneficiary, 0);
-        // (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(111);
         await this.reserveContract.revokeTokenGrant(this.beneficiary, 0, {
           from: this.reserveAccount
         }).should.be.fulfilled;
-        // (await this.token.balanceOf(vaultAddress)).should.be.bignumber.equal(0);
         await this.reserveContract.grants.call(this.beneficiary, 0).should.be.rejectedWith(EVMThrow);
         await this.reserveContract.grants.call(this.reserveContract.address, 0).should.be.fulfilled;
 
@@ -273,8 +271,7 @@ contract('LotusReserve', (accounts) => {
     it('should releaseRevokedBalance increase contract balance to Vault balance', async function () {
       this.beneficiary = accounts[2];
       const vaultValue = 3000;
-      const vaultType = 0;
-      const afterRelease = await this.reserveContract.releaseDates.call(vaultType) + duration.seconds(1);
+      const vaultType = parseInt(Math.random()*3); // 0, 1 or 2
       // grant Vault
       await this.reserveContract.grantTokens(this.beneficiary, vaultType, vaultValue, {
         from: this.reserveAccount
@@ -285,8 +282,9 @@ contract('LotusReserve', (accounts) => {
       }).should.be.fulfilled;
       const initialReserves = await this.token.balanceOf.call(this.reserveContract.address);
       const initialReservesRecord = await this.reserveContract.reserves.call(vaultType);
-      // (releaseRevokedBalance follow the same rules than release method in Vault)
-      await increaseTimeTo(afterRelease);
+
+      // make sure Vault release time has passed
+      await increaseTimeTo(this.afterRelease + duration.weeks(17));
 
       // releaseRevokedBalance
       await this.reserveContract.releaseRevokedBalance(0, {
@@ -302,11 +300,89 @@ contract('LotusReserve', (accounts) => {
       (await this.reserveContract.balance.call()).should.be.bignumber.equal(
         await this.token.balanceOf.call(this.reserveContract.address));
     });
+    it('should createPostsaleVaults create one Vault per each Vault previous to crowdsale end', async function () {
+      const tokenOwner = await this.token.owner.call();
+      const beneficiary = accounts[2];
+
+      const vault1Balance = new BigNumber(1000 * LTS);
+      const vault2Balance = new BigNumber(2000 * LTS);
+      const poolTokens = new BigNumber(200000 * LTS);
+
+      const endCrowdsale = async () => {
+        // simulate crowdsale end
+        await increaseTimeTo(this.afterRelease);
+        // transfer unsold tokens to postsalePool and close
+        await this.token.mint(this.postsalePool.address, poolTokens);
+        await this.postsalePool.close({ from: tokenOwner }).should.be.fulfilled;
+        // claim reserve tokens
+        await this.reserveContract.claimPostsale().should.be.fulfilled;
+      };
+
+      // appproving reserveBalance in postsalePool
+      const reserveBalance = await this.token.balanceOf.call(this.reserveContract.address);
+      await this.postsalePool.approve(this.reserveContract.address, reserveBalance);
+
+      // create pre sale vault
+      await this.reserveContract.grantTokens(beneficiary, 0, vault1Balance, {
+        from: this.reserveAccount
+      }).should.be.fulfilled;
+
+      await endCrowdsale();
+      const reserveAllowance = await this.postsalePool.allowance.call(this.reserveContract.address);
+
+      // create post sale vault (should not count for createPostsaleVaults)
+      await this.reserveContract.grantTokens(beneficiary, 0, vault2Balance, {
+        from: this.reserveAccount
+      }).should.be.fulfilled;
+
+      // actual test
+      await this.reserveContract.grants.call(beneficiary, 2).should.be.rejectedWith(EVMThrow);
+      await this.reserveContract.createPostsaleVaults({
+        from: this.reserveAccount
+      }).should.be.fulfilled;
+
+      /*
+       * summary:
+       * grants[0] is the presale Vault with 1000 LTS
+       * grants[1] is the postsale Vault with 2000 LTS
+       * grants[2] is the new postsale Vault because `createPostsaleVaults`
+                   reserveAllowance * %contributed
+       * grants[3] should not exist
+       */
+      const expectedDistribution = reserveAllowance.mul(vault1Balance).div(reserveBalance);
+      (await this.token.balanceOf.call((await this.reserveContract.grants.call(
+        beneficiary, 2)))).should.be.bignumber.equal(expectedDistribution);
+      await this.reserveContract.grants.call(beneficiary, 3).should.be.rejectedWith(EVMThrow);
+    });
+    it('should claimPostsale distribute the allowance proportionally between the reserves', async function () {
+      const tokenOwner = await this.token.owner.call();
+      const poolTokens = new BigNumber(200000 * LTS);
+      // simulate crowdsale end
+      await increaseTimeTo(this.afterRelease);
+      // transfer unsold tokens to postsalePool and close
+      await this.token.mint(this.postsalePool.address, poolTokens);
+      await this.postsalePool.close({ from: tokenOwner }).should.be.fulfilled;
+      // claim reserve tokens
+      await this.reserveContract.claimPostsale().should.be.fulfilled;
+      const allowance = await this.postsalePool.allowance.call(this.reserveContract.address);
+
+      const reserve1 = await this.reserveContract.reserves.call(0);
+      const reserve2 = await this.reserveContract.reserves.call(1);
+      const reserve3 = await this.reserveContract.reserves.call(2);
+
+      await this.reserveContract.claimPostsale().should.be.fulfilled;
+
+      const reserve1final = await this.reserveContract.reserves.call(0);
+      const reserve2final = await this.reserveContract.reserves.call(1);
+      const reserve3final = await this.reserveContract.reserves.call(2);
+
+      reserve1final.should.be.bignumber.equal(reserve1.plus(allowance.div(4)));
+      reserve2final.should.be.bignumber.equal(reserve2.plus(allowance.div(4)));
+      reserve3final.should.be.bignumber.equal(reserve3.plus(allowance.div(2)));
+
+      reserve1final.plus(reserve2final).plus(reserve3final).should.be.bignumber.equal(
+        await this.token.balanceOf.call(this.reserveContract.address)
+      );
+    });
   });
 });
-
-
-// test getVaultType: if type = 1, 2, 3
-// grantTokens crea un registro en grantedVaults
-// claimPostsale le da el allowance correcto a cada reserva
-// createPostsaleVaults recorre grantedVaults y le da lo correcto a cada uno
