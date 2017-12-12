@@ -10,10 +10,17 @@ contract LotusToken is MintableToken {
   uint public releaseDate;
   LotusReserve public reserve;
 
+  uint MAX_SUPPLY = 1000000000 * (10 ** 8);
+
   function LotusToken(address reserveAccount, uint64 _releaseDate) {
     releaseDate = _releaseDate;
     reserve = new LotusReserve(this);
     reserve.transferOwnership(reserveAccount);
+  }
+
+  function mint(address _to, uint256 _amount) onlyOwner canMint public returns (bool) {
+    require(totalSupply.add(_amount)<=MAX_SUPPLY);
+    return super.mint(_to, _amount);
   }
 
   function transfer(address _to, uint256 _value) public returns (bool) {
@@ -26,8 +33,8 @@ contract LotusToken is MintableToken {
     return super.transferFrom(_from, _to, _value);
   }
 
-  function finishMinting() onlyOwner public returns (bool) {
-    require(now > releaseDate);
+  function finishMinting() public returns (bool) {
+    require(totalSupply==MAX_SUPPLY);
     return super.finishMinting();
   }
 
