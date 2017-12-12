@@ -50,7 +50,7 @@ contract('LotusToken', (accounts) => {
       (await this.token.releaseDate.call()).should.be.bignumber.gt(latestTime());
 
       // actual tests
-      await this.token.transfer(0x123, 10, { from: account }).should.be.rejectedWith(EVMThrow);
+      await this.token.transfer(accounts[5], 10, { from: account }).should.be.rejectedWith(EVMThrow);
 
       // checking post-conditions
       (await this.token.balanceOf(account)).should.be.bignumber.equal(10);
@@ -65,7 +65,7 @@ contract('LotusToken', (accounts) => {
     });
 
     it('should not be able to mint more than MAX_SUPPLY', async function () {
-      await this.token.mint(accounts[0], TOKEN_SUPPLY.plus(1)).should.be.rejectedWith(EVMThrow);
+      await this.token.mint(accounts[0], TOKEN_SUPPLY.add(1)).should.be.rejectedWith(EVMThrow);
     });
 
     it('should not be able to finishMinting', async function () {
@@ -87,7 +87,7 @@ contract('LotusToken', (accounts) => {
       (await this.token.releaseDate.call()).should.be.bignumber.lte(latestTime());
 
       // actual tests
-      await this.token.transfer(0x123, 10, { from: account }).should.be.fulfilled;
+      await this.token.transfer(accounts[5], 10, { from: account }).should.be.fulfilled;
 
       // checking post-conditions
       (await this.token.balanceOf(account)).should.be.bignumber.equal(0);
