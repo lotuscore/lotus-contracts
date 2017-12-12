@@ -105,7 +105,7 @@ contract('LotusPresale', (accounts) => {
    */
   describe('accepting payments', function () {
     before(async function() {
-      this.value = ether(42);
+      this.value = ether(10);
       this.investor = accounts[3];
       this.purchaser = accounts[4];
     });

@@ -4,6 +4,10 @@ import latestTime from 'zeppelin-solidity/test/helpers/latestTime';
 import { advanceBlock } from 'zeppelin-solidity/test/helpers/advanceToBlock';
 import EVMThrow from 'zeppelin-solidity/test/helpers/EVMThrow';
 
+import {
+  TOKEN_SUPPLY // BigNumber(1000000000 * (10 ** 8))
+} from './helpers/globals';
+
 const BigNumber = web3.BigNumber;
 require('chai')
   .use(require('chai-as-promised'))
@@ -52,6 +56,18 @@ contract('LotusToken', (accounts) => {
       (await this.token.balanceOf(account)).should.be.bignumber.equal(10);
     });
 
+    it('should be able to mint', async function () {
+      await this.token.mint(accounts[0], 10).fulfilled;
+    });
+
+    it('should be able to mint the MAX_SUPPLY', async function () {
+      await this.token.mint(accounts[0], TOKEN_SUPPLY).fulfilled;
+    });
+
+    it('should not be able to mint more than MAX_SUPPLY', async function () {
+      await this.token.mint(accounts[0], TOKEN_SUPPLY.plus(1)).should.be.rejectedWith(EVMThrow);
+    });
+
     it('should not be able to finishMinting', async function () {
       await this.token.finishMinting().should.be.rejectedWith(EVMThrow);
     });
@@ -77,7 +93,13 @@ contract('LotusToken', (accounts) => {
       (await this.token.balanceOf(account)).should.be.bignumber.equal(0);
     });
 
-    it('should be able to finishMinting', async function () {
+    it('should not be able to finishMinting if MAX_SUPPLY is not reached', async function () {
+      await this.token.finishMinting().should.be.rejectedWith(EVMThrow);
+    });
+
+    it('should be able to finishMinting if MAX_SUPPLY is reached', async function () {
+      const actualSupply = await this.token.totalSupply.call();
+      await this.token.mint(accounts[0], TOKEN_SUPPLY.sub(actualSupply));
       await this.token.finishMinting().should.be.fulfilled;
     });
 
