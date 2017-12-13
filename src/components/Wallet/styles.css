@@ -1,0 +1,177 @@
+:root {
+    --aqua-green-two: #12e9a2;
+    --aqua-green: #14e9a3;
+    --azure: #00a3f5;
+    --dark-sky-blue: #33a2ee;
+    --dark: #1f252c;
+    --greyish-brown: #404040;
+    --turquoise-green: #00ee9c;
+    --warm-grey: #999;
+    --white: #f0f0f0;
+    --container-width: 1052px;
+}
+
+h1, h2 {
+    color: var(--greyish-brown);
+    text-transform: uppercase;
+    font-weight: 300;
+    margin: 20px 0 10px 0;
+}
+
+#Wallet {
+    background-image: linear-gradient(rgb(255, 255, 255), rgb(243, 243, 243));
+    height: 100%;
+    width: 100%;
+    position: absolute;
+}
+
+#Wallet .container {
+    position: relative;
+    width: 900px;
+    margin: 0 auto;
+}
+
+#Wallet .account-details p {
+    text-transform: uppercase;
+    margin: 15px 0 5px 0;
+}
+
+#Wallet .account-details p span {
+    font-family: 'Roboto Mono', monospace;
+    padding-left: 10px;
+}
+
+#Wallet .vaults .box-container {
+    display: inline-block;
+    width: 50%;
+}
+
+#Wallet .vaults .box-container .box {
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 0 4px 0 rgba(0,0,0,.16);
+    padding: 20px;
+    margin: 10px 10px 0 0;
+    position: relative;
+}
+
+#Wallet .vaults .box-container .box ul {
+    list-style: none;
+}
+
+#Wallet .vaults .box-container .box ul .account {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 15px;
+}
+
+#Wallet .vaults .box-container .box ul .release {
+    margin: 10px 0 5px 0;
+}
+
+#Wallet .vaults .box-container .box .label {
+    background-color: #d3d3d3;
+    padding: 3px 8px;
+    font-size: 13px;
+    color: var(--greyish-brown);
+    border-radius: 5px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    opacity: 0;
+    transition: opacity 0.1s ease-out;
+}
+
+#Wallet .vaults .box-container .box:hover .label {
+    opacity: 1;
+}
+
+#Wallet .vaults .box-container .box .label.green {
+    background-color: #d2ffec;
+}
+
+#Wallet .vaults .box-container .box .label.red {
+    background-color: #ffd9d9;
+}
+
+.balance {
+    font-size: 20px;
+}
+
+.balance span {
+    display: inline-block;
+}
+
+.balance span:first-child {
+    font-size: 25px;
+    padding-right: 10px;
+    color: var(--dark-sky-blue);
+}
+
+.balance span:nth-child(2) {
+    font-size: 30px;
+}
+
+button {
+    cursor: pointer;
+    text-decoration: none;
+    background-color: var(--aqua-green-two);
+    border-radius: 85px;
+    border: solid 1px var(--aqua-green-two);
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    height: 30px;
+    letter-spacing: 0.8px;
+    padding: 0 11px;
+    margin: 10px 5px 0 0;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+button.disabled {
+    cursor: default;
+    background-color: #dedede;
+    border-color: #dedede;
+}
+
+.spinner {
+  margin: 20px 0;
+  width: 70px;
+  text-align: center;
+}
+
+.spinner > div {
+  width: 18px;
+  height: 18px;
+  background-color: var(--dark-sky-blue);
+
+  border-radius: 100%;
+  display: inline-block;
+  -webkit-animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+  animation: sk-bouncedelay 1.4s infinite ease-in-out both;
+}
+
+.spinner .bounce1 {
+  -webkit-animation-delay: -0.32s;
+  animation-delay: -0.32s;
+}
+
+.spinner .bounce2 {
+  -webkit-animation-delay: -0.16s;
+  animation-delay: -0.16s;
+}
+
+@-webkit-keyframes sk-bouncedelay {
+  0%, 80%, 100% { -webkit-transform: scale(0) }
+  40% { -webkit-transform: scale(1.0) }
+}
+
+@keyframes sk-bouncedelay {
+  0%, 80%, 100% {
+    -webkit-transform: scale(0);
+    transform: scale(0);
+  } 40% {
+    -webkit-transform: scale(1.0);
+    transform: scale(1.0);
+  }
+}

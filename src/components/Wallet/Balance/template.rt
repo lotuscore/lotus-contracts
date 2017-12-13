@@ -1,0 +1,7 @@
+<div class="balance" rt-if="this.props.balance">
+    <span>LTS</span>
+    <span rt-repeat="fration in String(this.props.balance.toFixed(8)).split('.')" key="{frationIndex}">
+        <rt-virtual rt-if="frationIndex===0">{fration}.</rt-virtual>
+        <rt-virtual rt-if="frationIndex>0">{fration}</rt-virtual>
+    </span>
+</div>

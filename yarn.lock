@@ -5008,6 +5008,10 @@ module-deps@^4.0.8:
     through2 "^2.0.0"
     xtend "^4.0.0"
 
+moment@^2.19.4:
+  version "2.19.4"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.19.4.tgz#17e5e2c6ead8819c8ecfad83a0acccb312e94682"
+
 ms@0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
@@ -6044,6 +6048,12 @@ react-templates@^0.6.1:
     normalize-html-whitespace "0.2.0"
     optionator "0.8.2"
     text-table "0.2.0"
+
+react-web3@^0.4.3:
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/react-web3/-/react-web3-0.4.3.tgz#b6d46317f9c08d976c187a191117cdf0a5d823d4"
+  dependencies:
+    lodash "^4.17.4"
 
 react@^15.4.2:
   version "15.6.2"

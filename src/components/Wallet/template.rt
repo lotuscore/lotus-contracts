@@ -1,0 +1,33 @@
+<rt-import name="Balance" from="./Balance"/>
+<div id="Wallet">
+    <div class="container">
+        <div class="account-details">
+            <h1>Lotus Wallet</h1>
+            <p>Your Lotus Address: <span>{this.state.account}</span></p>
+            <Balance rt-if="this.state.balance" balance="{this.state.balance}" />
+            <div rt-if="!this.state.balance" class="spinner">
+                <div class="bounce1"></div>
+                <div class="bounce2"></div>
+                <div class="bounce3"></div>
+            </div>
+        </div>
+        <h2 rt-if="this.state.vaults.length > 0">Vaults</h2>
+        <div class="vaults" rt-if="this.state.vaults.length > 0">
+            <div class="box-container" rt-repeat="vault in this.state.vaults" key="{vaultIndex}">
+                <div class="box">
+                    <span class="label red" rt-if="vault.revocable">unclaimed</span>
+                    <span class="label green"  rt-if="!vault.revocable">claimed</span>
+                    <ul>
+                        <li class="account">{vault.address}</li>
+                        <li><Balance balance="{vault.balance}" /></li>
+                        <li class="release"><b>Release Date:</b> {this.format(vault.releaseDate)}</li>
+                    </ul>
+                    <div class="actions">
+                        <button rt-class="{disabled: !vault.revocable}">Claim</button>
+                        <button rt-class="{disabled: vault.releaseDate>this.state.now}">Release</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
