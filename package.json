@@ -57,6 +57,7 @@
     "moment": "^2.19.4",
     "react": "^15.4.2",
     "react-dom": "^15.4.2",
+    "react-modal": "^3.1.8",
     "react-web3": "^0.4.3"
   },
   "scripts": {

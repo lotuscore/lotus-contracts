@@ -1,10 +1,39 @@
+<rt-import name="default" as="Modal" from="react-modal/lib/components/Modal"/>
 <rt-import name="Balance" from="./Balance"/>
 <div id="Wallet">
     <div class="container">
         <div class="account-details">
             <h1>Lotus Wallet</h1>
             <p>Your Lotus Address: <span>{this.state.account}</span></p>
-            <Balance rt-if="this.state.balance" balance="{this.state.balance}" />
+            <div>
+                <Balance rt-if="this.state.balance" balance="{this.state.balance}" />
+                <button
+                    rt-if="this.state.balance && this.state.balance.gt(0)"  class="send-button"
+                    onClick="{this.openTransferModal}">
+                Send</button>
+            </div>
+            <Modal
+              isOpen={this.state.showTransferModal}
+              onRequestClose={this.closeTransferModal}
+              style={this.modalStyles}
+              ariaHideApp={false}
+              contentLabel="Transfer Modal">
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Pay to:</td>
+                            <td><input type="text" /></td>
+                        </tr>
+                        <tr>
+                            <td>Amount:</td>
+                            <td><input type="text" /></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="action">
+                    <button>Send</button>
+                </div>
+            </Modal>
             <div rt-if="!this.state.balance" class="spinner">
                 <div class="bounce1"></div>
                 <div class="bounce2"></div>
@@ -20,11 +49,19 @@
                     <ul>
                         <li class="account">{vault.address}</li>
                         <li><Balance balance="{vault.balance}" /></li>
-                        <li class="release"><b>Release Date:</b> {this.format(vault.releaseDate)}</li>
+                        <li class="release"><b>Release Date:</b> {this.format(vault.releaseTime)}</li>
                     </ul>
                     <div class="actions">
-                        <button rt-class="{disabled: !vault.revocable}">Claim</button>
-                        <button rt-class="{disabled: vault.releaseDate>this.state.now}">Release</button>
+                        <button
+                            rt-scope="!vault.revocable as disabled"
+                            rt-class="{disabled: !vault.revocable}"
+                            onClick="()=>if (!disabled) this.claim(vault.address)">
+                        Claim</button>
+                        <button
+                            rt-scope="vault.releaseTime>this.state.now as disabled"
+                            rt-class="{disabled: disabled}"
+                            onClick="()=>if (!disabled) this.release(vault.address)">
+                        Release</button>
                     </div>
                 </div>
             </div>

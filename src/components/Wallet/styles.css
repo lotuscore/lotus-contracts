@@ -93,7 +93,13 @@ h1, h2 {
     background-color: #ffd9d9;
 }
 
+#Wallet .send-button {
+    vertical-align: top;
+    margin: 4px 0 0 16px;
+}
+
 .balance {
+    display: inline-block;
     font-size: 20px;
 }
 
@@ -126,6 +132,7 @@ button {
     margin: 10px 5px 0 0;
     text-align: center;
     text-transform: uppercase;
+    outline:none;
 }
 
 button.disabled {

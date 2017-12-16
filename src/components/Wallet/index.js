@@ -24,13 +24,14 @@ class Wallet extends Component {
     LotusToken.setProvider(web3.currentProvider)
     LotusReserve.setProvider(web3.currentProvider)
     Vault.setProvider(web3.currentProvider)
-
     this.state = {
       account: context.web3.selectedAccount,
       vaults: [],
-      now: new Date().getTime()
+      now: new Date().getTime(),
+      showTransferModal: false
     }
-
+    this.openTransferModal = this.openTransferModal.bind(this);
+    this.closeTransferModal = this.closeTransferModal.bind(this);
   }
 
   componentWillMount() {
@@ -38,11 +39,19 @@ class Wallet extends Component {
     this.onChangeAccount()
   }
 
-  format(time) {
-      return moment(Number(time)).format('MMMM Do, YYYY')
+  openTransferModal() {
+    this.setState({ showTransferModal: true });
   }
 
-  onChangeAccount(a,b,c) {
+  closeTransferModal() {
+    this.setState({ showTransferModal: false });
+  }
+
+  format(time) {
+    return moment(Number(time)).format('MMMM Do, YYYY')
+  }
+
+  onChangeAccount() {
     const account = global.web3.eth.accounts[0];
     const updateAccount = async () => {
       const tokenInstance = await LotusToken.deployed()
@@ -50,20 +59,22 @@ class Wallet extends Component {
 
       const balance = await tokenInstance.balanceOf(account)
       const vaults = []
-      /* const vaults = [{
-        address: '0x768beb7e961c5b12b6a929483271d805eb0c8c5b',
-        balance: Math.random()*10000,
-        releaseDate: 1511546400000,
-        revocable: false
-      }]*/
 
       let i = 0
       while (true) {
-        let vaultAddress = await reserveInstance.grants.call(account, i)
-        if (vaultAddress === '0x') break;
-        vaults.push(
-          Vault.at(vaultAddress)
-        )
+        let vaultAddress
+        try {
+          vaultAddress = await reserveInstance.grants.call(account, i)
+        }
+        catch (e) { break }
+        if (vaultAddress === '0x') break
+        let vault = Vault.at(vaultAddress)
+        vaults.push({
+          address: vaultAddress,
+          balance: await vault.balance.call(),
+          releaseTime: (await vault.releaseTime.call())*1000,
+          revocable: await vault.revocable.call()
+        })
         i++
         // prevent infinite loop
         if (i > 100) throw new Error('Infinite loop')
@@ -72,6 +83,28 @@ class Wallet extends Component {
       this.setState({ account, balance, vaults })
     }
     updateAccount()
+  }
+
+  claim(vaultAddress) {
+    const vault = Vault.at(vaultAddress)
+    return vault.claim({from: this.state.account})
+  }
+
+  release(vaultAddress) {
+    const vault = Vault.at(vaultAddress)
+    return vault.release({from: this.state.account})
+  }
+
+  modalStyles = {
+    content : {
+      top: '50%',
+      left: '50%',
+      right: 'auto',
+      bottom: 'auto',
+      marginRight: '-50%',
+      transform: 'translate(-50%, -50%)',
+      borderRadius: '21px'
+    }
   }
 
   render() {
