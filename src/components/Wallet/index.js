@@ -36,6 +36,13 @@ class Wallet extends Component {
   componentWillMount() {
     // trigger load account data
     this.onChangeAccount()
+    const updateReleaseDate = async () => {
+      const tokenInstance = await LotusToken.deployed()
+      this.setState({
+        releaseDate: Number((await tokenInstance.releaseDate.call()).mul(1000))
+      })
+    }
+    updateReleaseDate()
   }
 
   openTransferModal() {

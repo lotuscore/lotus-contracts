@@ -8,8 +8,11 @@
             <div>
                 <Balance rt-if="this.state.balance" balance="{this.state.balance}" />
                 <button
-                    rt-if="this.state.balance && this.state.balance.gt(0)"  class="send-button"
-                    onClick="{this.openTransferModal}">
+                    rt-scope="this.state.now<this.state.releaseDate as disabled"
+                    rt-if="this.state.balance && this.state.balance.gt(0)"
+                    class="send-button"
+                    rt-class="{disabled: disabled}"
+                    onClick="()=>if (!disabled) this.openTransferModal()">
                 Send</button>
             </div>
             <TransferModal
