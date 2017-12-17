@@ -1,5 +1,5 @@
-<rt-import name="default" as="Modal" from="react-modal/lib/components/Modal"/>
 <rt-import name="Balance" from="./Balance"/>
+<rt-import name="TransferModal" from="./TransferModal"/>
 <div id="Wallet">
     <div class="container">
         <div class="account-details">
@@ -12,28 +12,12 @@
                     onClick="{this.openTransferModal}">
                 Send</button>
             </div>
-            <Modal
-              isOpen={this.state.showTransferModal}
-              onRequestClose={this.closeTransferModal}
-              style={this.modalStyles}
-              ariaHideApp={false}
-              contentLabel="Transfer Modal">
-                <table>
-                    <tbody>
-                        <tr>
-                            <td>Pay to:</td>
-                            <td><input type="text" /></td>
-                        </tr>
-                        <tr>
-                            <td>Amount:</td>
-                            <td><input type="text" /></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="action">
-                    <button>Send</button>
-                </div>
-            </Modal>
+            <TransferModal
+                token={this.tokenInstance}
+                account={this.state.account}
+                open={this.openTransferModal}
+                close={this.closeTransferModal}
+                show={this.state.showTransferModal} />
             <div rt-if="!this.state.balance" class="spinner">
                 <div class="bounce1"></div>
                 <div class="bounce2"></div>

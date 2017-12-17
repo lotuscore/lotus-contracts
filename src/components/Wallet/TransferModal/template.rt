@@ -1,0 +1,33 @@
+<rt-import name="default" as="Modal" from="react-modal/lib/components/Modal"/>
+<Modal
+  isOpen={this.props.show}
+  onRequestClose={this.props.close}
+  style={this.modalStyles}
+  ariaHideApp={false}
+  contentLabel="Transfer Modal">
+    <table id="TransferForm">
+        <tbody>
+            <tr>
+                <td>Pay to:</td>
+                <td>
+                    <input
+                        onChange="{this.setAddress}"
+                        type="text"
+                        value="{this.state.transferAddress}"
+                        placeholder="0x" /></td>
+            </tr>
+            <tr>
+                <td>Amount:</td>
+                <td><input id="TransferFormAmount" onChange="{this.setAmmount}" type="text" placeholder="0.00000000" value="{this.state.transferAmount}" /></td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="action">
+        <button
+            rt-class="{disabled: !this.validTransfer()}"
+            onClick="()=>if (this.validTransfer()) this.sendLTS()">Send</button>
+    </div>
+    <div>
+        {this.state.transferError}
+    </div>
+</Modal>

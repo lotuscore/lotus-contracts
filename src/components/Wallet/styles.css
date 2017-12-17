@@ -98,6 +98,19 @@ h1, h2 {
     margin: 4px 0 0 16px;
 }
 
+#TransferForm tr {
+    height: 20px;
+}
+
+#TransferForm input {
+    width: 420px;
+    margin: auto 0 auto 3px;
+    padding-left: 8px;
+    line-height: 2;
+    font-size: 16px;
+    font-family: 'Roboto Mono', monospace;
+}
+
 .balance {
     display: inline-block;
     font-size: 20px;

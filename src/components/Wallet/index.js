@@ -1,5 +1,5 @@
 import { Component } from 'react'
-import PropTypes from 'prop-types';
+import PropTypes from 'prop-types'
 import moment from 'moment'
 
 import LotusPresaleContract from '../../../build/contracts/LotusPresale.json'
@@ -15,7 +15,6 @@ const LotusToken = contract(LotusTokenContract)
 const LotusReserve = contract(LotusReserveContract)
 const Vault = contract(VaultContract)
 
-
 class Wallet extends Component {
   constructor(props, context) {
     super(props)
@@ -25,13 +24,13 @@ class Wallet extends Component {
     LotusReserve.setProvider(web3.currentProvider)
     Vault.setProvider(web3.currentProvider)
     this.state = {
+      showTransferModal: false,
       account: context.web3.selectedAccount,
       vaults: [],
-      now: new Date().getTime(),
-      showTransferModal: false
+      now: new Date().getTime()
     }
-    this.openTransferModal = this.openTransferModal.bind(this);
-    this.closeTransferModal = this.closeTransferModal.bind(this);
+    this.openTransferModal = this.openTransferModal.bind(this)
+    this.closeTransferModal = this.closeTransferModal.bind(this)
   }
 
   componentWillMount() {
@@ -40,11 +39,11 @@ class Wallet extends Component {
   }
 
   openTransferModal() {
-    this.setState({ showTransferModal: true });
+    this.setState({ showTransferModal: true })
   }
 
   closeTransferModal() {
-    this.setState({ showTransferModal: false });
+    this.setState({ showTransferModal: false })
   }
 
   format(time) {
@@ -52,12 +51,12 @@ class Wallet extends Component {
   }
 
   onChangeAccount() {
-    const account = global.web3.eth.accounts[0];
+    const account = global.web3.eth.accounts[0]
     const updateAccount = async () => {
-      const tokenInstance = await LotusToken.deployed()
-      const reserveInstance = LotusReserve.at(await tokenInstance.reserve.call())
+      this.tokenInstance = await LotusToken.deployed()
+      const reserveInstance = LotusReserve.at(await this.tokenInstance.reserve.call())
 
-      const balance = await tokenInstance.balanceOf(account)
+      const balance = await this.tokenInstance.balanceOf(account)
       const vaults = []
 
       let i = 0
@@ -93,18 +92,6 @@ class Wallet extends Component {
   release(vaultAddress) {
     const vault = Vault.at(vaultAddress)
     return vault.release({from: this.state.account})
-  }
-
-  modalStyles = {
-    content : {
-      top: '50%',
-      left: '50%',
-      right: 'auto',
-      bottom: 'auto',
-      marginRight: '-50%',
-      transform: 'translate(-50%, -50%)',
-      borderRadius: '21px'
-    }
   }
 
   render() {
