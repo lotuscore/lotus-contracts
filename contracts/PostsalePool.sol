@@ -8,6 +8,7 @@ contract PostsalePool {
 
   LotusToken public token;
   mapping (address => uint) public holders;
+  address[] holdersList;
 
   bool public closed = false;
   uint pool;
@@ -25,6 +26,10 @@ contract PostsalePool {
 
   function approve(address _holder, uint _value) onlyTokenOwner public {
     require(closed == false);
+    require(_value>0);
+    if (holders[_holder] == 0) {
+      holdersList.push(_holder);
+    }
     holders[_holder] = holders[_holder] + _value;
   }
 
@@ -45,6 +50,10 @@ contract PostsalePool {
     token.transfer(_holder, allowance(_holder));
   }
 
-  // function claimAll() public {}
+  function claimAll() public {
+    for (uint256 i = 0; i < holdersList.length; i++) {
+      claim(holdersList[i]);
+    }
+  }
 
 }
