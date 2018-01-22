@@ -150,5 +150,10 @@ contract('PostsalePool', (accounts) => {
       await increaseTimeTo(this.afterRelease);
       await this.postsalePool.claim(this.holder).should.be.fulfilled;
     });
+    it('should transfer the allowed amount after release date once', async function () {
+      await increaseTimeTo(this.afterRelease);
+      await this.postsalePool.claim(this.holder).should.be.fulfilled;
+      await this.postsalePool.claim(this.holder).should.be.rejectedWith(EVMThrow);
+    });
   });
 });

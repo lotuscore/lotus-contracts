@@ -47,12 +47,16 @@ contract PostsalePool {
 
   function claim(address _holder) public {
     require(closed);
+    require(holders[_holder]>0);
     token.transfer(_holder, allowance(_holder));
+    holders[_holder] = 0;
   }
 
   function claimAll() public {
     for (uint256 i = 0; i < holdersList.length; i++) {
-      claim(holdersList[i]);
+      if (holders[holdersList[i]]>0) {
+        claim(holdersList[i]);
+      }
     }
   }
 
