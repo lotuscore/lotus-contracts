@@ -4,8 +4,8 @@ const assert = require('assert')
 const LotusPresale = artifacts.require('./LotusPresale.sol')
 const LotusToken = artifacts.require('./LotusToken.sol')
 
-const RATE = 12000 // 12000 tokens per ether
-const CAP = 8334 * (10 ** 18)
+const RATE = 52500 // 52500 tokens per ether
+const CAP = 1905 * (10 ** 18)
 const RELEASE_DATE = Math.round(
   new Date(...process.env.RELEASE_DATE.split('-')).getTime() / 1000)
 const START_TIME = Math.round(
