@@ -22,6 +22,26 @@ contract LotusCrowdsale is CappedCrowdsale {
     postsalePool = PostsalePool(postsalePoolAddress);
   }
 
+  // low level token purchase function
+  function buyTokens(address beneficiary) public payable {
+    require(beneficiary != 0x0);
+    require(validPurchase());
+
+    uint256 weiAmount = msg.value;
+
+    // calculate token amount to be created
+    uint256 tokens = weiAmount.mul(rate).div(10 ** 10);
+
+    // update state
+    weiRaised = weiRaised.add(weiAmount);
+
+    token.mint(beneficiary, tokens);
+    postsalePool.approve(beneficiary, tokens);
+    TokenPurchase(msg.sender, beneficiary, weiAmount, tokens);
+
+    forwardFunds();
+  }
+
   function finalize() {
     require(hasEnded());
     token.mint(postsalePool, MAX_SUPPLY.sub(token.totalSupply()));

@@ -314,13 +314,11 @@ contract('LotusReserve', (accounts) => {
         // transfer unsold tokens to postsalePool and close
         await this.token.mint(this.postsalePool.address, poolTokens);
         await this.postsalePool.close({ from: tokenOwner }).should.be.fulfilled;
-        // claim reserve tokens
-        await this.reserveContract.claimPostsale().should.be.fulfilled;
       };
 
-      // appproving reserveBalance in postsalePool
+      // appproving reserveBalance in postsalePool (simulating postsalePool creation process)
       const reserveBalance = await this.token.balanceOf.call(this.reserveContract.address);
-      await this.postsalePool.approve(this.reserveContract.address, reserveBalance);
+      await this.postsalePool.approve(this.reserveContract.address, reserveBalance).should.be.fulfilled;
 
       // create pre sale vault
       await this.reserveContract.grantTokens(beneficiary, 0, vault1Balance, {
@@ -328,7 +326,10 @@ contract('LotusReserve', (accounts) => {
       }).should.be.fulfilled;
 
       await endCrowdsale();
+
       const reserveAllowance = await this.postsalePool.allowance.call(this.reserveContract.address);
+      // claim reserve tokens
+      await this.reserveContract.claimPostsale().should.be.fulfilled;
 
       // create post sale vault (should not count for createPostsaleVaults)
       await this.reserveContract.grantTokens(beneficiary, 0, vault2Balance, {
@@ -349,7 +350,7 @@ contract('LotusReserve', (accounts) => {
                    reserveAllowance * %contributed
        * grants[3] should not exist
        */
-      const expectedDistribution = reserveAllowance.mul(vault1Balance).div(reserveBalance);
+      const expectedDistribution = (reserveAllowance.mul(vault1Balance).div(reserveBalance)).trunc();
       (await this.token.balanceOf.call((await this.reserveContract.grants.call(
         beneficiary, 2)))).should.be.bignumber.equal(expectedDistribution);
       await this.reserveContract.grants.call(beneficiary, 3).should.be.rejectedWith(EVMThrow);
@@ -357,19 +358,25 @@ contract('LotusReserve', (accounts) => {
     it('should claimPostsale distribute the allowance proportionally between the reserves', async function () {
       const tokenOwner = await this.token.owner.call();
       const poolTokens = new BigNumber(200000 * LTS);
+
+      // appproving reserveBalance in postsalePool (simulating postsalePool creation process)
+      const reserveBalance = await this.token.balanceOf.call(this.reserveContract.address);
+      await this.postsalePool.approve(this.reserveContract.address, reserveBalance).should.be.fulfilled;
+
       // simulate crowdsale end
       await increaseTimeTo(this.afterRelease);
       // transfer unsold tokens to postsalePool and close
       await this.token.mint(this.postsalePool.address, poolTokens);
       await this.postsalePool.close({ from: tokenOwner }).should.be.fulfilled;
-      // claim reserve tokens
-      await this.reserveContract.claimPostsale().should.be.fulfilled;
+
       const allowance = await this.postsalePool.allowance.call(this.reserveContract.address);
+      allowance.should.be.bignumber.gt(0);
 
       const reserve1 = await this.reserveContract.reserves.call(0);
       const reserve2 = await this.reserveContract.reserves.call(1);
       const reserve3 = await this.reserveContract.reserves.call(2);
 
+      // claim reserve tokens
       await this.reserveContract.claimPostsale().should.be.fulfilled;
 
       const reserve1final = await this.reserveContract.reserves.call(0);

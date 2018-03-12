@@ -124,7 +124,7 @@ contract('PostsalePool', (accounts) => {
     describe('allowance', () => {
       for (let i = 0; i < 3; i++) {
         it(`should calculate the correct allowance - case ${i+1}`, async function () {
-          const expectedAllowance = this.poolTokens.mul(this.values[i]).div(TOKEN_SUPPLY).trunc();
+          const expectedAllowance = this.values[i].mul(this.poolTokens).div(TOKEN_SUPPLY.sub(this.poolTokens)).trunc();
           const allowance = await this.postsalePool.allowance(this.holders[i]).should.be.fulfilled;
           allowance.should.be.bignumber.equal(expectedAllowance);
         });

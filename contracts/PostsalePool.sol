@@ -42,7 +42,7 @@ contract PostsalePool {
 
   function allowance(address _holder) public constant returns (uint) {
     require(closed);
-    return holders[_holder].mul(pool).div(tokensSupply);
+    return holders[_holder].mul(pool).div(tokensSupply.sub(pool));
   }
 
   function claim(address _holder) public {
@@ -52,9 +52,12 @@ contract PostsalePool {
     holders[_holder] = 0;
   }
 
-  function claimAll() public {
-    for (uint256 i = 0; i < holdersList.length; i++) {
-      if (holders[holdersList[i]]>0) {
+  function claimAll(uint _i, uint _j) public {
+    if (_j == 0) {
+      uint tokenHolders = holdersList.length;
+    }
+    for (uint256 i = _i; i < tokenHolders; i++) {
+      if (holders[holdersList[i]]>0 && holdersList[i]!=address(token.reserve())) {
         claim(holdersList[i]);
       }
     }
