@@ -1,8 +1,9 @@
 /* globals  artifacts */
+require('dotenv').config({ path: '../.env' })
 const LotusCrowdsale = artifacts.require('./LotusCrowdsale.sol')
 
-const RATE = 6000 // 6000 tokens per ether
-const CAP = 8334 * (10 ** 18)
+const RATE = 35000 // 35000 tokens per ether
+const CAP = 15079 * (10 ** 18)
 const CROWDSALE_START = Math.round(
   new Date(...process.env.CROWDSALE_START.split('-')).getTime() / 1000)
 const CROWDSALE_END = Math.round(
