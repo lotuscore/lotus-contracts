@@ -25,10 +25,10 @@ contract('LotusToken', (accounts) => {
   });
 
   beforeEach(async function () {
-    const releaseDate = latestTime() + duration.days(1);
+    this.releaseDate = latestTime() + duration.days(1);
     const reserveAccount = accounts[3];
-    this.afterRelease = releaseDate + duration.days(1);
-    this.token = await LotusToken.new(reserveAccount, releaseDate);
+    this.afterRelease = this.releaseDate + duration.days(1);
+    this.token = await LotusToken.new(reserveAccount, this.releaseDate);
   });
 
   it('should reserves be equal to totalSupply equal to 0 LTS', async function () {
@@ -56,12 +56,41 @@ contract('LotusToken', (accounts) => {
       (await this.token.balanceOf(account)).should.be.bignumber.equal(10);
     });
 
+    it('should be able to change the release date 1', async function () {
+      await this.token.updateReleaseDate(
+        this.releaseDate + duration.days(5)).should.be.fulfilled;
+    });
+
+    it('should be able to change the release date 2', async function () {
+      await this.token.updateReleaseDate(
+        this.releaseDate - duration.days(5)
+      ).should.be.rejectedWith(EVMThrow);
+    });
+
+    it('should not be able to change the release date before now', async function () {
+      await this.token.updateReleaseDate(
+        latestTime() - duration.seconds(1)
+      ).should.be.rejectedWith(EVMThrow);
+    });
+
+    it('should be able to change the release date 3 months in the future', async function () {
+      await this.token.updateReleaseDate(
+        this.releaseDate + duration.weeks(4*3) - duration.days(1)
+      ).should.be.fulfilled;
+    });
+
+    it('should not be able to change the release date more than 3 months in the future', async function () {
+      await this.token.updateReleaseDate(
+        this.releaseDate + duration.weeks(4*4)
+      ).should.be.rejectedWith(EVMThrow);
+    });
+
     it('should be able to mint', async function () {
-      await this.token.mint(accounts[0], 10).fulfilled;
+      await this.token.mint(accounts[0], 10).should.be.fulfilled;
     });
 
     it('should be able to mint the MAX_SUPPLY', async function () {
-      await this.token.mint(accounts[0], TOKEN_SUPPLY).fulfilled;
+      await this.token.mint(accounts[0], TOKEN_SUPPLY).should.be.fulfilled;
     });
 
     it('should not be able to mint more than MAX_SUPPLY', async function () {
@@ -91,6 +120,10 @@ contract('LotusToken', (accounts) => {
 
       // checking post-conditions
       (await this.token.balanceOf(account)).should.be.bignumber.equal(0);
+    });
+
+    it('should not be able to change the release date', async function () {
+      await this.token.updateReleaseDate(this.releaseDate + duration.days(5)).should.be.rejectedWith(EVMThrow);
     });
 
     it('should not be able to finishMinting if MAX_SUPPLY is not reached', async function () {
