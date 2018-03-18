@@ -25,7 +25,9 @@ module.exports = function(deployer) {
   deployer.then(async function () {
     const token = await LotusToken.deployed()
     const presale = await LotusPresale.deployed()
+    console.log(`transfering token ownnership to ${presale.address}...`)
     token.transferOwnership(presale.address)
+    console.log(`init presale using ${token.address}...`)
     presale.init(token.address)
   })
 };
