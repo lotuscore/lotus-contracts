@@ -38,7 +38,8 @@ contract LotusToken is MintableToken {
     return super.finishMinting();
   }
 
-  function updateReleaseDate(uint64 _releaseDate) onlyOwner public returns (bool) {
+  function setReleaseDate(uint64 _releaseDate) public {
+    require(msg.sender == reserve.owner());
     // require token is not released
     require(now < releaseDate);
     // require the change is in the future
