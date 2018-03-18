@@ -306,13 +306,14 @@ contract('LotusReserve', (accounts) => {
 
       const vault1Balance = new BigNumber(1000 * LTS);
       const vault2Balance = new BigNumber(2000 * LTS);
-      const poolTokens = new BigNumber(200000 * LTS);
-
       const endCrowdsale = async () => {
         // simulate crowdsale end
         await increaseTimeTo(this.afterRelease);
         // transfer unsold tokens to postsalePool and close
-        await this.token.mint(this.postsalePool.address, poolTokens);
+        const totalSupply = await this.token.totalSupply.call();
+        await this.token.mint(
+          this.postsalePool.address,
+          TOKEN_SUPPLY.sub(totalSupply));
         await this.postsalePool.close({ from: tokenOwner }).should.be.fulfilled;
       };
 
@@ -320,7 +321,7 @@ contract('LotusReserve', (accounts) => {
       const reserveBalance = await this.token.balanceOf.call(this.reserveContract.address);
       await this.postsalePool.approve(this.reserveContract.address, reserveBalance).should.be.fulfilled;
 
-      // create pre sale vault
+      // create presale vault
       await this.reserveContract.grantTokens(beneficiary, 0, vault1Balance, {
         from: this.reserveAccount
       }).should.be.fulfilled;
@@ -351,8 +352,8 @@ contract('LotusReserve', (accounts) => {
        * grants[3] should not exist
        */
       const expectedDistribution = (reserveAllowance.mul(vault1Balance).div(reserveBalance)).trunc();
-      (await this.token.balanceOf.call((await this.reserveContract.grants.call(
-        beneficiary, 2)))).should.be.bignumber.equal(expectedDistribution);
+      const newVault = (await this.reserveContract.grants.call(beneficiary, 2));
+      (await this.token.balanceOf.call(newVault)).should.be.bignumber.equal(expectedDistribution);
       await this.reserveContract.grants.call(beneficiary, 3).should.be.rejectedWith(EVMThrow);
     });
     it('should claimPostsale distribute the allowance proportionally between the reserves', async function () {
@@ -383,9 +384,9 @@ contract('LotusReserve', (accounts) => {
       const reserve2final = await this.reserveContract.reserves.call(1);
       const reserve3final = await this.reserveContract.reserves.call(2);
 
-      reserve1final.should.be.bignumber.equal(reserve1.plus(allowance.div(4)));
-      reserve2final.should.be.bignumber.equal(reserve2.plus(allowance.div(4)));
-      reserve3final.should.be.bignumber.equal(reserve3.plus(allowance.div(2)));
+      reserve1final.should.be.bignumber.equal(reserve1.plus(allowance.div(3)));
+      reserve2final.should.be.bignumber.equal(reserve2.plus(allowance.div(3)));
+      reserve3final.should.be.bignumber.equal(reserve3.plus(allowance.div(3)));
 
       reserve1final.plus(reserve2final).plus(reserve3final).should.be.bignumber.equal(
         await this.token.balanceOf.call(this.reserveContract.address)
