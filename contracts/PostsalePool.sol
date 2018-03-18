@@ -53,8 +53,12 @@ contract PostsalePool {
   }
 
   function claimAll(uint _i, uint _j) public {
+    uint tokenHolders;
     if (_j == 0) {
-      uint tokenHolders = holdersList.length;
+      tokenHolders = holdersList.length;
+    }
+    else {
+      tokenHolders = _j;
     }
     for (uint256 i = _i; i < tokenHolders; i++) {
       if (holders[holdersList[i]]>0 && holdersList[i]!=address(token.reserve())) {

@@ -60,7 +60,6 @@ contract LotusPresale is CappedCrowdsale {
    * ownership of the token contract
    */
   function transferTokenOwnership(address crowdsaleAddress) public {
-    require(now > endTime);
     require(Crowdsale(crowdsaleAddress).hasEnded() == false);
     require(msg.sender == LotusToken(token).reserve().owner());
     token.transferOwnership(crowdsaleAddress);
