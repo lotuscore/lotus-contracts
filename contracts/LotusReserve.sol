@@ -70,8 +70,14 @@ contract LotusReserve is Ownable {
     // Check is not needed because sub(_value) will already throw if this condition is not met
     // require (reserves[_type] > _value);
     reserves[_type] = reserves[_type].sub(_value);
+    uint64 _releaseTime = releaseDates[_type];
 
-    Vault vault = new Vault(token, _beneficiary, releaseDates[_type], _type);
+    if (_releaseTime < now) {
+      // releaseTime should be in the future 3 minutes ~ 12 blocks
+      _releaseTime = uint64(now) + 3 minutes;
+    }
+
+    Vault vault = new Vault(token, _beneficiary, _releaseTime, _type);
     grants[_beneficiary].push(vault);
     if (postsalePool.closed() == false) {
       grantedVaults.push(vault);

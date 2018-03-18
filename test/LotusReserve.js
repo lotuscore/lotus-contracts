@@ -92,6 +92,7 @@ contract('LotusReserve', (accounts) => {
       r1.should.be.not.equal(r3);
       r2.should.be.not.equal(r3);
     });
+
     describe('grantTokens', () => {
       beforeEach(async function () {
         this.beneficiary = accounts[2];
@@ -169,6 +170,12 @@ contract('LotusReserve', (accounts) => {
         finalReserves.forEach((finalReserve, index) => {
           finalReserve.should.be.bignumber.equal(initialReserves[index].minus(transferAmount));
         });
+      });
+      it('should the created Vault works after release', async function () {
+        await increaseTimeTo(this.afterRelease + duration.weeks(17));
+        await this.reserveContract.grantTokens(this.beneficiary, 0, 100, {
+          from: this.reserveAccount
+        }).should.be.fulfilled;
       });
     });
     describe('revokeTokenGrant', () => {
