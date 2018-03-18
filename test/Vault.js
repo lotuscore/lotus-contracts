@@ -23,12 +23,29 @@ contract('LotusVault', (accounts) => {
     this.vaultOwner = accounts[1];
     this.beneficiary = accounts[2];
     this.token = await LotusToken.new(0x123, releaseDate);
-    this.vault = await Vault.new(this.token.address, this.beneficiary, this.releaseTime, { from: this.vaultOwner });
+    this.vault = await Vault.new(this.token.address, this.beneficiary, this.releaseTime, 0, { from: this.vaultOwner });
     this.token.mint(this.vault.address, 100);
     this.token.mint(this.vaultOwner, 50);
   });
+  it('should display correct types', async function () {
+    const createVaultType = (type) => Vault.new(
+      this.token.address,
+      this.beneficiary,
+      this.releaseTime,
+      type, { from: this.vaultOwner
+    });
+    const type0 = 'community';
+    const type1 = 'marketing and partnerships';
+    const type2 = 'development team and advisors';
+    const vault0 = await createVaultType(0);
+    const vault1 = await createVaultType(1);
+    const vault2 = await createVaultType(2);
+    (await vault0.get_type.call()).should.be.equal(type0);
+    (await vault1.get_type.call()).should.be.equal(type1);
+    (await vault2.get_type.call()).should.be.equal(type2);
+  });
   it('should prevent create a vault with the owner as beneficiary', async function () {
-    await Vault.new(this.token.address, this.vaultOwner, this.releaseTime, {
+    await Vault.new(this.token.address, this.vaultOwner, this.releaseTime, 0, {
       from: this.vaultOwner
     }).should.be.rejectedWith(EVMThrow);
   });

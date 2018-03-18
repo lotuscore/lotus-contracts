@@ -16,7 +16,7 @@ contract LotusReserve is Ownable {
   PostsalePool postsalePool;
   uint256 postsaleTokens;
   mapping (address => Vault[]) public grants;
-  event tokensGranted(address _beneficiary, uint8 _type, uint256 _value);
+  event vaultGranted(address _beneficiary, uint8 _type, uint256 _value);
 
   uint[3] public reserves;
   uint64[3] public releaseDates;
@@ -30,8 +30,6 @@ contract LotusReserve is Ownable {
   function init(PostsalePool _postsalePool) {
     require(initialized == false);
     require(token.balanceOf(this) > 0);
-    uint64 tokenReleaseDate = uint64(token.releaseDate());
-    initialized = true;
     initialReserves = token.balanceOf(this);
     postsalePool = _postsalePool;
 
@@ -41,10 +39,17 @@ contract LotusReserve is Ownable {
      * 2 == development team and advisors
      */
 
-    reserves[0] = initialReserves.div(4);
-    reserves[1] = initialReserves.div(4);
-    reserves[2] = initialReserves.div(2);
+    reserves[0] = initialReserves.div(3);
+    reserves[1] = initialReserves.div(3);
+    reserves[2] = initialReserves.div(3);
 
+    calculateReleaseDates();
+    initialized = true;
+  }
+
+  function calculateReleaseDates() {
+    require(initialized == false || owner == msg.sender);
+    uint64 tokenReleaseDate = uint64(token.releaseDate());
     releaseDates[0] = tokenReleaseDate + 4 weeks;
     releaseDates[1] = tokenReleaseDate + 8 weeks;
     releaseDates[2] = tokenReleaseDate + 16 weeks;
@@ -66,19 +71,14 @@ contract LotusReserve is Ownable {
     // require (reserves[_type] > _value);
     reserves[_type] = reserves[_type].sub(_value);
 
-    Vault vault = new Vault(token, _beneficiary, releaseDates[_type]);
+    Vault vault = new Vault(token, _beneficiary, releaseDates[_type], _type);
     grants[_beneficiary].push(vault);
     if (postsalePool.closed() == false) {
       grantedVaults.push(vault);
     }
 
     token.transfer(vault, _value);
-    tokensGranted(_beneficiary, _type, _value);
-  }
-
-  function getVaultType(Vault vault) internal constant returns (uint8) {
-    uint64 releaseTime = vault.releaseTime();
-    return releaseTime == releaseDates[0] ? 0 : releaseTime == releaseDates[1] ? 1 : 2;
+    vaultGranted(_beneficiary, _type, _value);
   }
 
   function revokeTokenGrant(address _holder, uint256 _grantId) onlyOwner public {
@@ -97,16 +97,16 @@ contract LotusReserve is Ownable {
   function releaseRevokedBalance(uint256 _index) onlyOwner public {
     Vault vault = grants[this][_index];
     uint256 vaultValue = token.balanceOf(vault);
-    uint8 _type = getVaultType(vault);
+    uint8 _type = vault.type_id();
     reserves[_type] = reserves[_type].add(vaultValue);
     vault.release();
   }
 
   function claimPostsale() public {
     postsaleTokens = postsalePool.allowance(this);
-    reserves[0] = reserves[0].add(postsaleTokens.div(4));
-    reserves[1] = reserves[1].add(postsaleTokens.div(4));
-    reserves[2] = reserves[2].add(postsaleTokens.div(2));
+    reserves[0] = reserves[0].add(postsaleTokens.div(3));
+    reserves[1] = reserves[1].add(postsaleTokens.div(3));
+    reserves[2] = reserves[2].add(postsaleTokens.div(3));
     postsalePool.claim(this);
   }
 
@@ -114,15 +114,13 @@ contract LotusReserve is Ownable {
     require(postsaleTokens > 0);
     uint256 postsaleCut;
     uint256 vaultBalance;
-    uint8 _type;
     Vault vault;
     for (uint256 i = 0; i < grantedVaults.length; i++) {
       vault = Vault(grantedVaults[i]);
       vaultBalance = token.balanceOf(vault);
       if (vaultBalance > 0) {
         postsaleCut = vaultBalance.mul(postsaleTokens).div(initialReserves);
-        _type = getVaultType(vault);
-        grantTokens(vault.beneficiary(), _type, postsaleCut);
+        grantTokens(vault.beneficiary(), vault.type_id(), postsaleCut);
       }
     }
   }
